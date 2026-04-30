@@ -4,7 +4,6 @@
 #include <stdint.h>
 
 #include "ads112c04.h"
-#include "ads112c04_internal.h"
 #include "resistance_sensor.h"
 #include "sensor.h"
 
@@ -71,6 +70,13 @@ esp_err_t resistance_sensor_init(
     resistance_sensor->injected_current_uA = resistance_sensor_cfg->injected_current_uA;
     resistance_sensor->r_short = resistance_sensor_cfg->r_short;
     resistance_sensor->unit = resistance_sensor_cfg->unit;
+
+    // set up idac on resistance sensor channel
+    const idac_current_t current = s_current_to_adc_enum(resistance_sensor->injected_current_uA);
+    const idac_routing_t routing = s_pin_to_adc_enum(resistance_sensor->sensor.p_pin);
+    ESP_RETURN_ON_ERROR(ads112c04_set_idac_current(resistance_sensor->sensor.adc, current), TAG, "Failed to set IDAC current");
+    ESP_RETURN_ON_ERROR(ads112c04_set_idac_routing(resistance_sensor->sensor.adc, 1, routing), TAG, "Failed to route IDAC");
+    
     return ESP_OK;
 }
 
@@ -78,26 +84,10 @@ esp_err_t get_resistance_reading(resistance_sensor_t *resistance_sensor, float *
     if (resistance_sensor == NULL || resistance == NULL) {
         return ESP_ERR_INVALID_ARG;
     }
-
-    esp_err_t ret = ESP_OK;
-
-    const idac_current_t current = s_current_to_adc_enum(resistance_sensor->injected_current_uA);
-    const idac_routing_t routing = s_pin_to_adc_enum(resistance_sensor->sensor.p_pin);
-
-    // need to use internal functions for manual mutex control here
-    ESP_GOTO_ON_ERROR(ads112c04_internal_lock_adc(resistance_sensor->sensor.adc), error, TAG, "Failed to lock adc");
-    ESP_GOTO_ON_ERROR(ads112c04_internal_set_idac_current(resistance_sensor->sensor.adc, current), error, TAG, "Failed to set IDAC current");
-    ESP_GOTO_ON_ERROR(ads112c04_internal_set_idac_routing(resistance_sensor->sensor.adc, 1, routing), error, TAG, "Failed to set IDAC routing");
-
     float voltage = 0;
-    ESP_GOTO_ON_ERROR(sensor_voltage_reading_unsafe(&resistance_sensor->sensor, &voltage), error, TAG, "Failed to get voltage reading");
-
-    ESP_GOTO_ON_ERROR(ads112c04_internal_set_idac_routing(resistance_sensor->sensor.adc, 1, IDAC_DISABLED), error, TAG, "Failed to disable IDAC");
-error:
-    ESP_RETURN_ON_ERROR(ads112c04_internal_unlock_adc(resistance_sensor->sensor.adc), TAG, "Failed to unlock adc");
-    if (ret != ESP_OK) {
-        return ret;
-    }
+    ESP_RETURN_ON_ERROR(
+        sensor_voltage_reading(&resistance_sensor->sensor, &voltage), TAG, "Failed to get resistance voltage reading"
+    );
 
     const float resistance_ohms = (1e6 * voltage / resistance_sensor->injected_current_uA) - resistance_sensor->r_short;
     if (resistance_sensor->unit == RESISTANCE_SENSOR_OHMS) {

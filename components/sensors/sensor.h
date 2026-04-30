@@ -25,4 +25,3 @@ typedef struct {
 esp_err_t sensor_init(sensor_t *sensor, const sensor_config_t *sensor_cfg);
 
 esp_err_t sensor_voltage_reading(sensor_t *sensor, float *voltage);
-esp_err_t sensor_voltage_reading_unsafe(sensor_t *sensor, float *voltage);
