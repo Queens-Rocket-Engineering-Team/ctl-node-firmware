@@ -4,6 +4,7 @@
 #include <stdint.h>
 
 #include "ads112c04.h"
+#include "ads112c04_internal.h"
 #include "sensor.h"
 
 static const char *TAG = "SENSOR";
@@ -34,6 +35,17 @@ esp_err_t sensor_init(sensor_t *sensor, const sensor_config_t *sensor_cfg) {
 esp_err_t sensor_voltage_reading(sensor_t *sensor, float *voltage) {
     ESP_RETURN_ON_ERROR(
         ads112c04_get_single_voltage_reading(
+            sensor->adc, voltage, sensor->p_pin, sensor->n_pin, sensor->gain, sensor->pga_enabled
+        ),
+        TAG,
+        "Failed to get sensor reading"
+    );
+    return ESP_OK;
+}
+
+esp_err_t sensor_voltage_reading_unsafe(sensor_t *sensor, float *voltage) {
+    ESP_RETURN_ON_ERROR(
+        ads112c04_internal_get_single_voltage_reading(
             sensor->adc, voltage, sensor->p_pin, sensor->n_pin, sensor->gain, sensor->pga_enabled
         ),
         TAG,

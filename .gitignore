@@ -1,6 +1,5 @@
 build/
 managed_components/
 .vscode/
-sdkconfig.local
 sdkconfig
 sdkconfig.old

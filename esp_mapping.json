@@ -2,7 +2,7 @@
     "i2c_bus": {
         "sda_pin": 9,
         "scl_pin": 10,
-        "frequency_Hz": 100000
+        "frequency_Hz": 1000000
     },
     "wifi_indicator_pin": 1,
 

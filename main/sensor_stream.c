@@ -2,6 +2,7 @@
 #include <esp_err.h>
 #include <esp_log.h>
 #include <esp_timer.h>
+#include <float.h>
 #include <freertos/FreeRTOS.h>
 #include <stdatomic.h>
 
@@ -17,97 +18,130 @@
 #include "sensor_stream.h"
 #include "setup.h"
 
-#define MAX_FREQUENCY 100
+#define SENSOR_READ_STACK_SIZE 4096
+#define MAX_FREQUENCY 250
 
 static const char *TAG = "SENSOR STREAM";
 
-static esp_err_t s_generic_read_sensor(config_sensor_t *generic_sensor, float *value, uint8_t *unit) {
-    if (generic_sensor == NULL || value == NULL || unit == NULL) {
-        return ESP_ERR_INVALID_ARG;
-    }
+typedef struct {
+    SemaphoreHandle_t sensor_read_trigger_semaphore;
+    SemaphoreHandle_t sensor_read_done_semaphore;
+    config_sensor_t *generic_sensor;
+    float value;
+    uint8_t unit;
+} sensor_ctx_t;
 
-    switch (generic_sensor->sensor_type) {
-    case THERMOCOUPLE:
-        switch (generic_sensor->sensor.thermocouple.unit) {
-        case THERMOCOUPLE_C:
-            *unit = QLCP_UNIT_CELSIUS;
+static void s_generic_read_sensor(void *pvParams) {
+    sensor_ctx_t *ctx = (sensor_ctx_t *)pvParams;
+
+    while (1) {
+        // wait until sensor read triggered
+        xSemaphoreTake(ctx->sensor_read_trigger_semaphore, portMAX_DELAY);
+
+        switch (ctx->generic_sensor->sensor_type) {
+        case THERMOCOUPLE:
+            switch (ctx->generic_sensor->sensor.thermocouple.unit) {
+            case THERMOCOUPLE_C:
+                ctx->unit = QLCP_UNIT_CELSIUS;
+                break;
+            case THERMOCOUPLE_K:
+                ctx->unit = QLCP_UNIT_KELVIN;
+                break;
+            case THERMOCOUPLE_F:
+                ctx->unit = QLCP_UNIT_FAHRENHEIT;
+                break;
+            }
+            ESP_ERROR_CHECK_WITHOUT_ABORT(
+                get_thermocouple_reading(&ctx->generic_sensor->sensor.thermocouple, &ctx->value)
+            );
             break;
-        case THERMOCOUPLE_K:
-            *unit = QLCP_UNIT_KELVIN;
+        case PRESSURE_TRANSDUCER:
+            switch (ctx->generic_sensor->sensor.pressure_transducer.unit) {
+            case PRESSURE_TRANSDUCER_PSI:
+                ctx->unit = QLCP_UNIT_PSI;
+                break;
+            case PRESSURE_TRANSDUCER_BAR:
+                ctx->unit = QLCP_UNIT_BAR;
+                break;
+            case PRESSURE_TRANSDUCER_PA:
+                ctx->unit = QLCP_UNIT_PASCAL;
+                break;
+            }
+            ESP_ERROR_CHECK_WITHOUT_ABORT(
+                get_pressure_reading(&ctx->generic_sensor->sensor.pressure_transducer, &ctx->value)
+            );
             break;
-        case THERMOCOUPLE_F:
-            *unit = QLCP_UNIT_FAHRENHEIT;
+        case LOAD_CELL:
+            switch (ctx->generic_sensor->sensor.load_cell.unit) {
+            case LOAD_CELL_KG:
+                ctx->unit = QLCP_UNIT_KILOGRAMS;
+                break;
+            case LOAD_CELL_N:
+                ctx->unit = QLCP_UNIT_NEWTONS;
+                break;
+            }
+            ESP_ERROR_CHECK_WITHOUT_ABORT(get_load_cell_reading(&ctx->generic_sensor->sensor.load_cell, &ctx->value));
             break;
+        case RESISTANCE_SENSOR:
+            switch (ctx->generic_sensor->sensor.resistance_sensor.unit) {
+            case RESISTANCE_SENSOR_OHMS:
+                ctx->unit = QLCP_UNIT_OHMS;
+                break;
+            }
+            ESP_ERROR_CHECK_WITHOUT_ABORT(
+                get_resistance_reading(&ctx->generic_sensor->sensor.resistance_sensor, &ctx->value)
+            );
+            break;
+        case CURRENT_SENSOR:
+            switch (ctx->generic_sensor->sensor.current_sensor.unit) {
+            case CURRENT_SENSOR_A:
+                ctx->unit = QLCP_UNIT_AMPS;
+                break;
+            }
+            ESP_ERROR_CHECK_WITHOUT_ABORT(get_current_reading(&ctx->generic_sensor->sensor.current_sensor, &ctx->value));
+            break;
+        default:
+            ctx->value = FLT_MAX; // assign max float value on fail
+            ctx->unit = QLCP_UNIT_UNITLESS;
         }
-        ESP_RETURN_ON_ERROR(
-            get_thermocouple_reading(&generic_sensor->sensor.thermocouple, value),
-            TAG,
-            "Failed to get thermocouple reading"
-        );
-        break;
-    case PRESSURE_TRANSDUCER:
-        switch (generic_sensor->sensor.pressure_transducer.unit) {
-        case PRESSURE_TRANSDUCER_PSI:
-            *unit = QLCP_UNIT_PSI;
-            break;
-        case PRESSURE_TRANSDUCER_BAR:
-            *unit = QLCP_UNIT_BAR;
-            break;
-        case PRESSURE_TRANSDUCER_PA:
-            *unit = QLCP_UNIT_PASCAL;
-            break;
-        }
-        ESP_RETURN_ON_ERROR(
-            get_pressure_reading(&generic_sensor->sensor.pressure_transducer, value),
-            TAG,
-            "Failed to get pressure transducer reading"
-        );
-        break;
-    case LOAD_CELL:
-        switch (generic_sensor->sensor.load_cell.unit) {
-        case LOAD_CELL_KG:
-            *unit = QLCP_UNIT_KILOGRAMS;
-            break;
-        case LOAD_CELL_N:
-            *unit = QLCP_UNIT_NEWTONS;
-            break;
-        }
-        ESP_RETURN_ON_ERROR(
-            get_load_cell_reading(&generic_sensor->sensor.load_cell, value), TAG, "Failed to get load cell reading"
-        );
-        break;
-    case RESISTANCE_SENSOR:
-        switch (generic_sensor->sensor.resistance_sensor.unit) {
-        case RESISTANCE_SENSOR_OHMS:
-            *unit = QLCP_UNIT_OHMS;
-            break;
-        }
-        ESP_RETURN_ON_ERROR(
-            get_resistance_reading(&generic_sensor->sensor.resistance_sensor, value),
-            TAG,
-            "Failed to get resistance reading"
-        );
-        break;
-    case CURRENT_SENSOR:
-        switch (generic_sensor->sensor.current_sensor.unit) {
-        case CURRENT_SENSOR_A:
-            *unit = QLCP_UNIT_AMPS;
-            break;
-        }
-        ESP_RETURN_ON_ERROR(
-            get_current_reading(&generic_sensor->sensor.current_sensor, value), TAG, "Failed to get current reading"
-        );
-        break;
-    default:
-        return ESP_ERR_INVALID_ARG;
+        // give back semaphore on completion
+        xSemaphoreGive(ctx->sensor_read_done_semaphore);
     }
-    return ESP_OK;
 }
 
 void sensor_stream(void *pvParams) {
     app_ctx_t *app_ctx = (app_ctx_t *)pvParams;
 
-    esp_err_t err;
+    // outgoing packet buffer
+    static qlcp_sensor_data data[CONFIG_NUM_SENSORS] = {0};
+    // semaphore buffers to notify sensor read tasks
+    static StaticSemaphore_t sensor_read_trigger_semaphore_buffer[CONFIG_NUM_SENSORS];
+    static StaticSemaphore_t sensor_read_done_semaphore_buffer[CONFIG_NUM_SENSORS];
+    // stack for static sensor read tasks
+    static StaticTask_t sensor_read_task_buffer[CONFIG_NUM_SENSORS];
+    static StackType_t sensor_read_stack[CONFIG_NUM_SENSORS][SENSOR_READ_STACK_SIZE];
+    // context for sensor read tasks
+    static sensor_ctx_t sensor_ctx[CONFIG_NUM_SENSORS] = {0};
+
+    for (size_t i = 0; i < CONFIG_NUM_SENSORS; i++) {
+
+        sensor_ctx[i].sensor_read_trigger_semaphore = xSemaphoreCreateBinaryStatic(&sensor_read_trigger_semaphore_buffer[i]);
+        sensor_ctx[i].sensor_read_done_semaphore = xSemaphoreCreateBinaryStatic(&sensor_read_done_semaphore_buffer[i]);
+        sensor_ctx[i].generic_sensor = &app_ctx->sensors[i];
+
+        char task_name[25];
+        snprintf(task_name, sizeof(task_name), "sensor_read_%u", i);
+
+        xTaskCreateStatic(
+            s_generic_read_sensor,
+            task_name,
+            SENSOR_READ_STACK_SIZE,
+            (void *)&sensor_ctx[i],
+            1,
+            sensor_read_stack[i],
+            &sensor_read_task_buffer[i]
+        );
+    }
 
     uint32_t period_ms = 1000; // default to 1Hz
     TickType_t xLastWakeTime = xTaskGetTickCount();
@@ -131,14 +165,19 @@ void sensor_stream(void *pvParams) {
                 xLastWakeTime = xTaskGetTickCount(); // update timestamp to avoid double sending packets on change
             }
         }
-
-        static qlcp_sensor_data data[CONFIG_NUM_SENSORS] = {0};
-
+        // start individual sensor read tasks
         for (size_t i = 0; i < CONFIG_NUM_SENSORS; i++) {
             data[i].sensor_id = i;
-            err = s_generic_read_sensor(&app_ctx->sensors[i], &data[i].value, &data[i].unit);
-            if (err != ESP_OK) {
-                ESP_LOGE(TAG, "Failed sensor read for sensor index %u", i);
+            xSemaphoreGive(sensor_ctx[i].sensor_read_trigger_semaphore);
+        }
+        // wait until all sensor reads are complete
+        for (size_t i = 0; i < CONFIG_NUM_SENSORS; i++) {
+            if (xSemaphoreTake(sensor_ctx[i].sensor_read_done_semaphore, pdMS_TO_TICKS(250)) == pdTRUE) {
+                data[i].value = sensor_ctx[i].value;
+                data[i].unit = sensor_ctx[i].unit;
+            } else {
+                data[i].value = FLT_MAX;
+                data[i].unit = QLCP_UNIT_UNITLESS;
             }
         }
 
@@ -156,7 +195,7 @@ void sensor_stream(void *pvParams) {
         };
         // send data packets to the udp send queue
         xQueueSend(app_ctx->network_ctx->udp_send_queue_handle, (void *)&data_packet, MESSAGE_QUEUE_TIMEOUT);
-        // binary semaphore to prevent modifying data struct before sent
+        // binary semaphore to prevent proceeding before data sent
         xSemaphoreTake(app_ctx->network_ctx->udp_send_semaphore_handle, pdMS_TO_TICKS(50));
 
         // if single reading, clear bit to avoid relooping
