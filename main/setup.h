@@ -16,7 +16,7 @@ typedef struct {
     network_ctx_t *network_ctx;
     EventGroupHandle_t sensor_stream_event_group_handle;
     TaskHandle_t sensor_stream_handle;
-    atomic_uint_least32_t ts_offset;
+    atomic_int_least32_t ts_offset;
     atomic_uint_least16_t sequence;
     i2c_master_bus_handle_t bus_handle;
 } app_ctx_t;
