@@ -271,7 +271,23 @@ void app_main(void) {
 
             default:
                 ESP_LOGE(TAG, "Invalid client packet type recieved: %d", payload_in.packet_type);
-                continue;
+                payload_out.packet_type = QLCP_PT_NACK;
+
+                const uint32_t current_ts_offset = atomic_load(&app_ctx.ts_offset);
+                const uint32_t timestamp = current_ts_offset + (uint32_t)(esp_timer_get_time() / 1000);
+                const uint16_t sequence = atomic_fetch_add(&app_ctx.sequence, 1);
+
+                const qlcp_nack_packet nack = {
+                    .nack_packet_type = payload_in.packet_type,
+                    .nack_sequence = payload_in.payload_data.header_only.sequence,
+                    .nack_error_code = QLCP_ERR_UNKNOWN_TYPE,
+                    .header = {
+                               .sequence = sequence,
+                               .timestamp = timestamp,
+                               },
+                };
+                payload_out.payload_data.nack = nack;
+                break;
             }
             // send the packet out to the tcp send queue
             xQueueSend(app_ctx.network_ctx->tcp_send_queue_handle, (void *)&payload_out, MESSAGE_QUEUE_TIMEOUT);
