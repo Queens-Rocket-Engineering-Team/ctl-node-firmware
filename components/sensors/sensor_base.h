@@ -6,14 +6,16 @@
 
 #include "ads112c04.h"
 
-typedef struct {
+typedef struct sensor_base sensor_base_t;
+
+struct sensor_base {
     esp_err_t (*read_sensor)(sensor_base_t *base, float *value);
     ads112c04_t *adc;
     ads112c04_pin_t p_pin;
     ads112c04_pin_t n_pin;
     uint8_t gain;
     bool pga_enabled;
-} sensor_base_t;
+};
 
 typedef struct {
     ads112c04_t *adc;

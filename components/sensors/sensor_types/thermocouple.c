@@ -151,7 +151,7 @@ esp_err_t thermocouple_init(thermocouple_t *thermocouple, const thermocouple_con
 esp_err_t get_thermocouple_reading(thermocouple_t *thermocouple, float *temperature) {
     float voltage = 0;
     ESP_RETURN_ON_ERROR(
-        sensor_voltage_reading(&thermocouple->base, &voltage), TAG, "Failed to get thermocouple voltage reading"
+        sensor_base_voltage_reading(&thermocouple->base, &voltage), TAG, "Failed to get thermocouple voltage reading"
     );
 
     float cjc_temp = 0;

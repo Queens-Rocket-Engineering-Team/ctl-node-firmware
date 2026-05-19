@@ -44,11 +44,7 @@ header_content = f"""\
 #include <stdint.h>
 
 #include "ads112c04.h"
-#include "thermocouple.h"
-#include "pressure_transducer.h"
-#include "load_cell.h"
-#include "resistance_sensor.h"
-#include "current_sensor.h"
+#include "sensor.h"
 #include "control.h"
 
 // Auto-generated header from esp_config.json and esp_mapping.json
@@ -66,28 +62,9 @@ extern const char json_config_str[];
 
 {wifi_pin_define}
 
-typedef enum {{
-    THERMOCOUPLE,
-    PRESSURE_TRANSDUCER,
-    LOAD_CELL,
-    RESISTANCE_SENSOR,
-    CURRENT_SENSOR,
-}} config_sensor_type_t;
-
-typedef struct {{
-    config_sensor_type_t sensor_type;
-    union {{
-        thermocouple_t thermocouple;
-        pressure_transducer_t pressure_transducer;
-        load_cell_t load_cell;
-        resistance_sensor_t resistance_sensor;
-        current_sensor_t current_sensor;
-    }} sensor;
-}} config_sensor_t;
-
 esp_err_t config_ads112c04s_init(ads112c04_t adcs[], size_t len_adcs, i2c_master_bus_handle_t bus_handle);
 
-esp_err_t config_sensors_init(config_sensor_t sensors[], size_t sensors_len, ads112c04_t adcs[], size_t len_adcs);
+esp_err_t config_sensors_init(sensor_t sensors[], size_t sensors_len, ads112c04_t adcs[], size_t len_adcs);
 
 esp_err_t config_controls_init(control_t controls[], size_t len_controls);
 """
@@ -105,7 +82,6 @@ except Exception as e:
 # template for mapping between values in the json config and corresponding c sensor config structs
 sensor_templates = {
     'thermocouple': {
-        'type_enum': 'THERMOCOUPLE',
         'cfg_struct_name': 'thermocouple_config_t',
         'init_func': 'thermocouple_init',
         'cfg_struct_fields': {
@@ -120,7 +96,6 @@ sensor_templates = {
         },
     },
     'pressure_transducer': {
-        'type_enum': 'PRESSURE_TRANSDUCER',
         'cfg_struct_name': 'pressure_transducer_config_t',
         'init_func': 'pressure_transducer_init',
         'cfg_struct_fields': {
@@ -136,7 +111,6 @@ sensor_templates = {
         },
     },
     'load_cell': {
-        'type_enum': 'LOAD_CELL',
         'cfg_struct_name': 'load_cell_config_t',
         'init_func': 'load_cell_init',
         'cfg_struct_fields': {
@@ -153,7 +127,6 @@ sensor_templates = {
         },
     },
     'resistance_sensor': {
-        'type_enum': 'RESISTANCE_SENSOR',
         'cfg_struct_name': 'resistance_sensor_config_t',
         'init_func': 'resistance_sensor_init',
         'cfg_struct_fields': {
@@ -167,7 +140,6 @@ sensor_templates = {
         },
     },
     'current_sensor': {
-        'type_enum': 'CURRENT_SENSOR',
         'cfg_struct_name': 'current_sensor_config_t',
         'init_func': 'current_sensor_init',
         'cfg_struct_fields': {
@@ -242,14 +214,12 @@ def generate_sensor_init(sensor_cfg: dict, sensor_type: str, mapping: dict, inde
         return ESP_ERR_NOT_FOUND;
     }}
 
-    sensors[{index}].sensor_type = {template['type_enum']};
-
     const {template['cfg_struct_name']} cfg = {{
         .adc = adc,
 {cfg_struct_fields_str}
     }};
 
-    ESP_RETURN_ON_ERROR({template['init_func']}(&sensors[{index}].sensor.{sensor_type}, &cfg), TAG, "Failed to initialize {sensor_type}, index {index}");
+    ESP_RETURN_ON_ERROR({template['init_func']}(&sensors[{index}].{sensor_type}, &cfg), TAG, "Failed to initialize {sensor_type}, index {index}");
     }}
     """
 
@@ -309,11 +279,7 @@ source_content = f"""\
 #include <stdint.h>
 
 #include "ads112c04.h"
-#include "thermocouple.h"
-#include "pressure_transducer.h"
-#include "load_cell.h"
-#include "resistance_sensor.h"
-#include "current_sensor.h"
+#include "sensor.h"
 #include "control.h"
 
 #include "config_json.h"

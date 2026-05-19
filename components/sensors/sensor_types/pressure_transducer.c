@@ -14,7 +14,7 @@ static esp_err_t read_sensor(sensor_base_t *base, float *value) {
         return ESP_ERR_INVALID_ARG;
     }
     // cast base to pressure_transducer_t, since it is the first member of struct
-    return get_pressure_transducer_reading((pressure_transducer_t *)base, value);
+    return get_pressure_reading((pressure_transducer_t *)base, value);
 }
 
 esp_err_t pressure_transducer_init(
@@ -37,10 +37,10 @@ esp_err_t pressure_transducer_init(
     };
 
     ESP_RETURN_ON_ERROR(
-        sensor_init(&pressure_transducer->base, &base_cfg), TAG, "Failed to initialize pressure transducer sensor"
+        sensor_base_init(&pressure_transducer->base, &base_cfg), TAG, "Failed to initialize pressure transducer sensor"
     );
 
-    pressure_transducer->base.read_sensor = get_pressure_reading;
+    pressure_transducer->base.read_sensor = read_sensor;
     pressure_transducer->resistor_ohms = pressure_transducer_cfg->resistor_ohms;
     pressure_transducer->max_pressure_psi = pressure_transducer_cfg->max_pressure_psi;
     pressure_transducer->unit = pressure_transducer_cfg->unit;
