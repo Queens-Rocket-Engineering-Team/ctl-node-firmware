@@ -139,17 +139,20 @@ void sensor_stream(void *pvParams) {
                 xLastWakeTime = xTaskGetTickCount(); // update timestamp to avoid double sending packets on change
             }
         }
+        
         // start individual sensor read tasks
         for (size_t i = 0; i < CONFIG_NUM_SENSORS; i++) {
-            data[i].sensor_id = i;
             xSemaphoreGive(sensor_ctx[i].sensor_read_trigger_semaphore);
         }
+
         // wait until all sensor reads are complete
         for (size_t i = 0; i < CONFIG_NUM_SENSORS; i++) {
             if (xSemaphoreTake(sensor_ctx[i].sensor_read_done_semaphore, pdMS_TO_TICKS(250)) == pdTRUE) {
+                data[i].sensor_id = i;
                 data[i].value = sensor_ctx[i].value;
                 data[i].unit = sensor_ctx[i].unit;
             } else {
+                data[i].sensor_id = i;
                 data[i].value = FLT_MAX;
                 data[i].unit = QLCP_UNIT_UNITLESS;
             }
