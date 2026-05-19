@@ -35,7 +35,7 @@ esp_err_t load_cell_init(load_cell_t *load_cell, const load_cell_config_t *load_
     load_cell->base.read_sensor = read_sensor;
     load_cell->load_rating_N = load_cell_cfg->load_rating_N;
     load_cell->full_scale_V = load_cell_cfg->excitation_V * (load_cell_cfg->sensitivity_vV / 1000);
-    load_cell->unit = load_cell_cfg->unit;
+    load_cell->base.unit = load_cell_cfg->unit;
     return ESP_OK;
 }
 
@@ -50,9 +50,9 @@ esp_err_t get_load_cell_reading(load_cell_t *load_cell, float *weight) {
     );
 
     const float newtons = (voltage / load_cell->full_scale_V) * load_cell->load_rating_N;
-    if (load_cell->unit == LOAD_CELL_N) {
+    if (load_cell->base.unit == SENSOR_UNIT_N) {
         *weight = newtons;
-    } else if (load_cell->unit == LOAD_CELL_KG) {
+    } else if (load_cell->base.unit == SENSOR_UNIT_KG) {
         *weight = newtons / 9.805;
     } else {
         return ESP_ERR_INVALID_ARG;

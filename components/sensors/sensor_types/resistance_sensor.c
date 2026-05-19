@@ -78,7 +78,7 @@ esp_err_t resistance_sensor_init(
     resistance_sensor->base.read_sensor = read_sensor;
     resistance_sensor->injected_current_uA = resistance_sensor_cfg->injected_current_uA;
     resistance_sensor->r_short = resistance_sensor_cfg->r_short;
-    resistance_sensor->unit = resistance_sensor_cfg->unit;
+    resistance_sensor->base.unit = resistance_sensor_cfg->unit;
 
     // set up idac on resistance sensor channel
     const idac_current_t current = s_current_to_adc_enum(resistance_sensor->injected_current_uA);
@@ -99,7 +99,7 @@ esp_err_t get_resistance_reading(resistance_sensor_t *resistance_sensor, float *
     );
 
     const float resistance_ohms = (1e6 * voltage / resistance_sensor->injected_current_uA) - resistance_sensor->r_short;
-    if (resistance_sensor->unit == RESISTANCE_SENSOR_OHMS) {
+    if (resistance_sensor->base.unit == SENSOR_UNIT_OHMS) {
         *resistance = resistance_ohms;
     } else {
         return ESP_ERR_INVALID_ARG;

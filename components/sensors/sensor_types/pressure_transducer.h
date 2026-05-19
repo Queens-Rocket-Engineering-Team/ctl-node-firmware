@@ -6,17 +6,10 @@
 
 #include "sensor_base.h"
 
-typedef enum : uint8_t {
-    PRESSURE_TRANSDUCER_PSI,
-    PRESSURE_TRANSDUCER_BAR,
-    PRESSURE_TRANSDUCER_PA,
-} pressure_transducer_unit_t;
-
 typedef struct {
     sensor_base_t base;
     float resistor_ohms;
     float max_pressure_psi;
-    pressure_transducer_unit_t unit;
 } pressure_transducer_t;
 
 typedef struct {
@@ -24,7 +17,7 @@ typedef struct {
     ads112c04_pin_t pin;
     float resistor_ohms;
     float max_pressure_psi;
-    pressure_transducer_unit_t unit;
+    sensor_unit_t unit;
 } pressure_transducer_config_t;
 
 esp_err_t pressure_transducer_init(

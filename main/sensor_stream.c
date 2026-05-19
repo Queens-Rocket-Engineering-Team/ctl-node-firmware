@@ -22,83 +22,59 @@ static const char *TAG = "SENSOR STREAM";
 typedef struct {
     SemaphoreHandle_t sensor_read_trigger_semaphore;
     SemaphoreHandle_t sensor_read_done_semaphore;
-    config_sensor_t *generic_sensor;
+    sensor_t *sensor;
     float value;
     uint8_t unit;
 } sensor_ctx_t;
 
-static void s_generic_read_sensor(void *pvParams) {
+static void s_read_sensor_task(void *pvParams) {
     sensor_ctx_t *ctx = (sensor_ctx_t *)pvParams;
 
     while (1) {
         // wait until sensor read triggered
         xSemaphoreTake(ctx->sensor_read_trigger_semaphore, portMAX_DELAY);
 
-        switch (ctx->generic_sensor->sensor_type) {
-        case THERMOCOUPLE:
-            switch (ctx->generic_sensor->sensor.thermocouple.unit) {
-            case THERMOCOUPLE_C:
-                ctx->unit = QLCP_UNIT_CELSIUS;
-                break;
-            case THERMOCOUPLE_K:
-                ctx->unit = QLCP_UNIT_KELVIN;
-                break;
-            case THERMOCOUPLE_F:
-                ctx->unit = QLCP_UNIT_FAHRENHEIT;
-                break;
-            }
-            ESP_ERROR_CHECK_WITHOUT_ABORT(
-                get_thermocouple_reading(&ctx->generic_sensor->sensor.thermocouple, &ctx->value)
-            );
-            break;
-        case PRESSURE_TRANSDUCER:
-            switch (ctx->generic_sensor->sensor.pressure_transducer.unit) {
-            case PRESSURE_TRANSDUCER_PSI:
-                ctx->unit = QLCP_UNIT_PSI;
-                break;
-            case PRESSURE_TRANSDUCER_BAR:
-                ctx->unit = QLCP_UNIT_BAR;
-                break;
-            case PRESSURE_TRANSDUCER_PA:
-                ctx->unit = QLCP_UNIT_PASCAL;
-                break;
-            }
-            ESP_ERROR_CHECK_WITHOUT_ABORT(
-                get_pressure_reading(&ctx->generic_sensor->sensor.pressure_transducer, &ctx->value)
-            );
-            break;
-        case LOAD_CELL:
-            switch (ctx->generic_sensor->sensor.load_cell.unit) {
-            case LOAD_CELL_KG:
-                ctx->unit = QLCP_UNIT_KILOGRAMS;
-                break;
-            case LOAD_CELL_N:
-                ctx->unit = QLCP_UNIT_NEWTONS;
-                break;
-            }
-            ESP_ERROR_CHECK_WITHOUT_ABORT(get_load_cell_reading(&ctx->generic_sensor->sensor.load_cell, &ctx->value));
-            break;
-        case RESISTANCE_SENSOR:
-            switch (ctx->generic_sensor->sensor.resistance_sensor.unit) {
-            case RESISTANCE_SENSOR_OHMS:
-                ctx->unit = QLCP_UNIT_OHMS;
-                break;
-            }
-            ESP_ERROR_CHECK_WITHOUT_ABORT(
-                get_resistance_reading(&ctx->generic_sensor->sensor.resistance_sensor, &ctx->value)
-            );
-            break;
-        case CURRENT_SENSOR:
-            switch (ctx->generic_sensor->sensor.current_sensor.unit) {
-            case CURRENT_SENSOR_A:
-                ctx->unit = QLCP_UNIT_AMPS;
-                break;
-            }
-            ESP_ERROR_CHECK_WITHOUT_ABORT(get_current_reading(&ctx->generic_sensor->sensor.current_sensor, &ctx->value));
-            break;
-        default:
+        // get sensor reading
+        if (ctx->sensor->base.read_sensor(&ctx->sensor->base, &ctx->value) != ESP_OK) {
             ctx->value = FLT_MAX; // assign max float value on fail
+        }
+
+        // translate sensor unit to QLCP units
+        switch (ctx->sensor->base.unit) {
+        case SENSOR_UNIT_A:
+            ctx->unit = QLCP_UNIT_AMPS;
+            break;
+        case SENSOR_UNIT_N:
+            ctx->unit = QLCP_UNIT_NEWTONS;
+            break;
+        case SENSOR_UNIT_KG:
+            ctx->unit = QLCP_UNIT_KILOGRAMS;
+            break;
+        case SENSOR_UNIT_PSI:
+            ctx->unit = QLCP_UNIT_PSI;
+            break;
+        case SENSOR_UNIT_BAR:
+            ctx->unit = QLCP_UNIT_BAR;
+            break;
+        case SENSOR_UNIT_PA:
+            ctx->unit = QLCP_UNIT_PASCAL;
+            break;
+        case SENSOR_UNIT_OHMS:
+            ctx->unit = QLCP_UNIT_OHMS;
+            break;
+        case SENSOR_UNIT_C:
+            ctx->unit = QLCP_UNIT_CELSIUS;
+            break;
+        case SENSOR_UNIT_K:
+            ctx->unit = QLCP_UNIT_KELVIN;
+            break;
+        case SENSOR_UNIT_F:
+            ctx->unit = QLCP_UNIT_FAHRENHEIT;
+            break;
+        case SENSOR_UNIT_UNITLESS:
+        default:
             ctx->unit = QLCP_UNIT_UNITLESS;
+            break;
         }
         // give back semaphore on completion
         xSemaphoreGive(ctx->sensor_read_done_semaphore);
@@ -121,15 +97,17 @@ void sensor_stream(void *pvParams) {
 
     for (size_t i = 0; i < CONFIG_NUM_SENSORS; i++) {
 
-        sensor_ctx[i].sensor_read_trigger_semaphore = xSemaphoreCreateBinaryStatic(&sensor_read_trigger_semaphore_buffer[i]);
+        sensor_ctx[i].sensor_read_trigger_semaphore = xSemaphoreCreateBinaryStatic(
+            &sensor_read_trigger_semaphore_buffer[i]
+        );
         sensor_ctx[i].sensor_read_done_semaphore = xSemaphoreCreateBinaryStatic(&sensor_read_done_semaphore_buffer[i]);
-        sensor_ctx[i].generic_sensor = &app_ctx->sensors[i];
+        sensor_ctx[i].sensor = &app_ctx->sensors[i];
 
         char task_name[25];
         snprintf(task_name, sizeof(task_name), "sensor_read_%u", i);
 
         xTaskCreateStatic(
-            s_generic_read_sensor,
+            s_read_sensor_task,
             task_name,
             SENSOR_READ_STACK_SIZE,
             (void *)&sensor_ctx[i],

@@ -35,7 +35,7 @@ esp_err_t current_sensor_init(current_sensor_t *current_sensor, const current_se
     current_sensor->base.read_sensor = read_sensor;
     current_sensor->shunt_resistor_ohms = current_sensor_cfg->shunt_resistor_ohms;
     current_sensor->csa_gain = current_sensor_cfg->csa_gain;
-    current_sensor->unit = current_sensor_cfg->unit;
+    current_sensor->base.unit = current_sensor_cfg->unit;
     return ESP_OK;
 }
 
@@ -52,7 +52,7 @@ esp_err_t get_current_reading(current_sensor_t *current_sensor, float *current) 
     );
 
     const float current_A = (voltage / current_sensor->shunt_resistor_ohms) / current_sensor->csa_gain;
-    if (current_sensor->unit == CURRENT_SENSOR_A) {
+    if (current_sensor->base.unit == SENSOR_UNIT_A) {
         *current = current_A;
     } else {
         return ESP_ERR_INVALID_ARG;

@@ -6,15 +6,10 @@
 
 #include "sensor_base.h"
 
-typedef enum : uint8_t {
-    RESISTANCE_SENSOR_OHMS,
-} resistance_sensor_unit_t;
-
 typedef struct {
     sensor_base_t base;
     uint16_t injected_current_uA;
     float r_short;
-    resistance_sensor_unit_t unit;
 } resistance_sensor_t;
 
 typedef struct {
@@ -22,7 +17,7 @@ typedef struct {
     ads112c04_pin_t pin;
     uint16_t injected_current_uA;
     float r_short;
-    resistance_sensor_unit_t unit;
+    sensor_unit_t unit;
 } resistance_sensor_config_t;
 
 esp_err_t resistance_sensor_init(

@@ -144,7 +144,8 @@ esp_err_t thermocouple_init(thermocouple_t *thermocouple, const thermocouple_con
     );
 
     thermocouple->base.read_sensor = read_sensor;
-    thermocouple->unit = thermocouple_cfg->unit;
+    thermocouple->base.unit = thermocouple_cfg->unit;
+    thermocouple->type = thermocouple_cfg->type; // currently unused, only supports type K
     return ESP_OK;
 }
 
@@ -165,11 +166,11 @@ esp_err_t get_thermocouple_reading(thermocouple_t *thermocouple, float *temperat
     const float thermocouple_voltage_mV = voltage * 1000 + cjc_voltage_mV;
     const float temp_C = s_voltage_to_temperature(thermocouple_voltage_mV);
 
-    if (thermocouple->unit == THERMOCOUPLE_C) {
+    if (thermocouple->base.unit == SENSOR_UNIT_C) {
         *temperature = temp_C;
-    } else if (thermocouple->unit == THERMOCOUPLE_K) {
+    } else if (thermocouple->base.unit == SENSOR_UNIT_K) {
         *temperature = temp_C + 273.15;
-    } else if (thermocouple->unit == THERMOCOUPLE_F) {
+    } else if (thermocouple->base.unit == SENSOR_UNIT_F) {
         *temperature = (temp_C * 1.8) + 32;
     } else {
         return ESP_ERR_INVALID_ARG;

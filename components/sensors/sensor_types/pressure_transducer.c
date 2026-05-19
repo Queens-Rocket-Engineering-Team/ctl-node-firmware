@@ -43,7 +43,7 @@ esp_err_t pressure_transducer_init(
     pressure_transducer->base.read_sensor = read_sensor;
     pressure_transducer->resistor_ohms = pressure_transducer_cfg->resistor_ohms;
     pressure_transducer->max_pressure_psi = pressure_transducer_cfg->max_pressure_psi;
-    pressure_transducer->unit = pressure_transducer_cfg->unit;
+    pressure_transducer->base.unit = pressure_transducer_cfg->unit;
     return ESP_OK;
 }
 
@@ -62,11 +62,11 @@ esp_err_t get_pressure_reading(pressure_transducer_t *pressure_transducer, float
 
     // 4-20 mA pressure transducer
     const float psi = ((current_mA - 4) / 16) * pressure_transducer->max_pressure_psi;
-    if (pressure_transducer->unit == PRESSURE_TRANSDUCER_PSI) {
+    if (pressure_transducer->base.unit == SENSOR_UNIT_PSI) {
         *pressure = psi;
-    } else if (pressure_transducer->unit == PRESSURE_TRANSDUCER_BAR) {
+    } else if (pressure_transducer->base.unit == SENSOR_UNIT_BAR) {
         *pressure = psi * 0.0689476;
-    } else if (pressure_transducer->unit == PRESSURE_TRANSDUCER_PA) {
+    } else if (pressure_transducer->base.unit == SENSOR_UNIT_PA) {
         *pressure = psi * 6894.76;
     } else {
         return ESP_ERR_INVALID_ARG;

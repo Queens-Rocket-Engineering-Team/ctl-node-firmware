@@ -90,9 +90,9 @@ sensor_templates = {
             'unit': 'unit',
         },
         'unit': {
-            'c': 'THERMOCOUPLE_C',
-            'k': 'THERMOCOUPLE_K',
-            'f': 'THERMOCOUPLE_F',
+            'c': 'SENSOR_UNIT_C',
+            'k': 'SENSOR_UNIT_K',
+            'f': 'SENSOR_UNIT_F',
         },
     },
     'pressure_transducer': {
@@ -105,9 +105,9 @@ sensor_templates = {
             'unit': 'unit',
         },
         'unit': {
-            'psi': 'PRESSURE_TRANSDUCER_PSI',
-            'bar': 'PRESSURE_TRANSDUCER_BAR',
-            'pa': 'PRESSURE_TRANSDUCER_PA',
+            'psi': 'SENSOR_UNIT_PSI',
+            'bar': 'SENSOR_UNIT_BAR',
+            'pa': 'SENSOR_UNIT_PA',
         },
     },
     'load_cell': {
@@ -122,8 +122,8 @@ sensor_templates = {
             'unit': 'unit',
         },
         'unit': {
-            'kg': 'LOAD_CELL_KG',
-            'n': 'LOAD_CELL_N',
+            'kg': 'SENSOR_UNIT_KG',
+            'n': 'SENSOR_UNIT_N',
         },
     },
     'resistance_sensor': {
@@ -136,7 +136,7 @@ sensor_templates = {
             'unit': 'unit',
         },
         'unit': {
-            'ohms': 'RESISTANCE_SENSOR_OHMS',
+            'ohms': 'SENSOR_UNIT_OHMS',
         },
     },
     'current_sensor': {
@@ -149,7 +149,7 @@ sensor_templates = {
             'unit': 'unit',
         },
         'unit': {
-            'a': 'CURRENT_SENSOR_A',
+            'a': 'SENSOR_UNIT_A',
         },
     },
 }
@@ -311,7 +311,7 @@ esp_err_t config_ads112c04s_init(ads112c04_t adcs[], size_t len_adcs, i2c_master
     return ESP_OK;
 }}
 
-esp_err_t config_sensors_init(config_sensor_t sensors[], size_t sensors_len, ads112c04_t adcs[], size_t len_adcs) {{
+esp_err_t config_sensors_init(sensor_t sensors[], size_t sensors_len, ads112c04_t adcs[], size_t len_adcs) {{
     if (sensors == NULL || adcs == NULL) {{
         return ESP_ERR_INVALID_ARG;
     }}

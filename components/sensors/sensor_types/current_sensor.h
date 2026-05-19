@@ -6,15 +6,10 @@
 
 #include "sensor_base.h"
 
-typedef enum : uint8_t {
-    CURRENT_SENSOR_A,
-} current_sensor_unit_t;
-
 typedef struct {
     sensor_base_t base;
     float shunt_resistor_ohms;
     float csa_gain;
-    current_sensor_unit_t unit;
 } current_sensor_t;
 
 typedef struct {
@@ -22,7 +17,7 @@ typedef struct {
     ads112c04_pin_t pin;
     float shunt_resistor_ohms;
     float csa_gain;
-    current_sensor_unit_t unit;
+    sensor_unit_t unit;
 } current_sensor_config_t;
 
 esp_err_t current_sensor_init(current_sensor_t *current_sensor, const current_sensor_config_t *current_sensor_cfg);
