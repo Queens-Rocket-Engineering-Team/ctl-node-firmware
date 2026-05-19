@@ -5,16 +5,24 @@
 
 #include "ads112c04.h"
 #include "load_cell.h"
-#include "sensor.h"
+#include "sensor_base.h"
 
 static const char *TAG = "LOAD CELL";
+
+static esp_err_t read_sensor(sensor_base_t *base, float *value) {
+    if (base == NULL || value == NULL) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    // cast base to load_cell_t, since it is the first member of struct
+    return get_load_cell_reading((load_cell_t *)base, value);
+}
 
 esp_err_t load_cell_init(load_cell_t *load_cell, const load_cell_config_t *load_cell_cfg) {
     if (load_cell == NULL || load_cell_cfg == NULL) {
         return ESP_ERR_INVALID_ARG;
     }
 
-    const sensor_config_t sensor_cfg = {
+    const sensor_base_config_t base_cfg = {
         .adc = load_cell_cfg->adc,
         .p_pin = load_cell_cfg->p_pin,
         .n_pin = load_cell_cfg->n_pin,
@@ -22,8 +30,9 @@ esp_err_t load_cell_init(load_cell_t *load_cell, const load_cell_config_t *load_
         .pga_enabled = true,
     };
 
-    ESP_RETURN_ON_ERROR(sensor_init(&load_cell->sensor, &sensor_cfg), TAG, "Failed to initialize load cell sensor");
+    ESP_RETURN_ON_ERROR(sensor_base_init(&load_cell->base, &base_cfg), TAG, "Failed to initialize load cell sensor");
 
+    load_cell->base.read_sensor = read_sensor;
     load_cell->load_rating_N = load_cell_cfg->load_rating_N;
     load_cell->full_scale_V = load_cell_cfg->excitation_V * (load_cell_cfg->sensitivity_vV / 1000);
     load_cell->unit = load_cell_cfg->unit;
@@ -37,7 +46,7 @@ esp_err_t get_load_cell_reading(load_cell_t *load_cell, float *weight) {
 
     float voltage = 0;
     ESP_RETURN_ON_ERROR(
-        sensor_voltage_reading(&load_cell->sensor, &voltage), TAG, "Failed to get load cell voltage reading"
+        sensor_base_voltage_reading(&load_cell->base, &voltage), TAG, "Failed to get load cell voltage reading"
     );
 
     const float newtons = (voltage / load_cell->full_scale_V) * load_cell->load_rating_N;

@@ -7,11 +7,12 @@
 
 #include "ads112c04.h"
 #include "config_json.h"
+#include "sensor.h"
 #include "wifi_tools.h"
 
 typedef struct {
     ads112c04_t adcs[CONFIG_NUM_ADCS];
-    config_sensor_t sensors[CONFIG_NUM_SENSORS];
+    sensor_t sensors[CONFIG_NUM_SENSORS];
     control_t controls[CONFIG_NUM_CONTROLS];
     network_ctx_t *network_ctx;
     EventGroupHandle_t sensor_stream_event_group_handle;

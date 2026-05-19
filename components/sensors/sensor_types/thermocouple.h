@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "sensor.h"
+#include "sensor_base.h"
 
 typedef enum : uint8_t {
     THERMOCOUPLE_C,
@@ -13,7 +13,7 @@ typedef enum : uint8_t {
 } thermocouple_unit_t;
 
 typedef struct {
-    sensor_t sensor;
+    sensor_base_t base;
     thermocouple_unit_t unit;
 } thermocouple_t;
 

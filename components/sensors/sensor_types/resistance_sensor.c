@@ -5,9 +5,17 @@
 
 #include "ads112c04.h"
 #include "resistance_sensor.h"
-#include "sensor.h"
+#include "sensor_base.h"
 
 static const char *TAG = "RESISTANCE_SENSOR";
+
+static esp_err_t read_sensor(sensor_base_t *base, float *value) {
+    if (base == NULL || value == NULL) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    // cast base to resistance_sensor_t, since it is the first member of struct
+    return get_resistance_reading((resistance_sensor_t *)base, value);
+}
 
 static idac_current_t s_current_to_adc_enum(uint16_t current_val) {
     switch (current_val) {
@@ -55,7 +63,7 @@ esp_err_t resistance_sensor_init(
         return ESP_ERR_INVALID_ARG;
     }
 
-    const sensor_config_t sensor_cfg = {
+    const sensor_base_config_t base_cfg = {
         .adc = resistance_sensor_cfg->adc,
         .p_pin = resistance_sensor_cfg->pin,
         .n_pin = ADS112C04_AVSS,
@@ -64,18 +72,19 @@ esp_err_t resistance_sensor_init(
     };
 
     ESP_RETURN_ON_ERROR(
-        sensor_init(&resistance_sensor->sensor, &sensor_cfg), TAG, "Failed to initialize resistance sensor"
+        sensor_base_init(&resistance_sensor->base, &base_cfg), TAG, "Failed to initialize resistance sensor"
     );
 
+    resistance_sensor->base.read_sensor = read_sensor;
     resistance_sensor->injected_current_uA = resistance_sensor_cfg->injected_current_uA;
     resistance_sensor->r_short = resistance_sensor_cfg->r_short;
     resistance_sensor->unit = resistance_sensor_cfg->unit;
 
     // set up idac on resistance sensor channel
     const idac_current_t current = s_current_to_adc_enum(resistance_sensor->injected_current_uA);
-    const idac_routing_t routing = s_pin_to_adc_enum(resistance_sensor->sensor.p_pin);
-    ESP_RETURN_ON_ERROR(ads112c04_set_idac_current(resistance_sensor->sensor.adc, current), TAG, "Failed to set IDAC current");
-    ESP_RETURN_ON_ERROR(ads112c04_set_idac_routing(resistance_sensor->sensor.adc, 1, routing), TAG, "Failed to route IDAC");
+    const idac_routing_t routing = s_pin_to_adc_enum(resistance_sensor->base.p_pin);
+    ESP_RETURN_ON_ERROR(ads112c04_set_idac_current(resistance_sensor->base.adc, current), TAG, "Failed to set IDAC current");
+    ESP_RETURN_ON_ERROR(ads112c04_set_idac_routing(resistance_sensor->base.adc, 1, routing), TAG, "Failed to route IDAC");
     
     return ESP_OK;
 }
@@ -86,7 +95,7 @@ esp_err_t get_resistance_reading(resistance_sensor_t *resistance_sensor, float *
     }
     float voltage = 0;
     ESP_RETURN_ON_ERROR(
-        sensor_voltage_reading(&resistance_sensor->sensor, &voltage), TAG, "Failed to get resistance voltage reading"
+        sensor_base_voltage_reading(&resistance_sensor->base, &voltage), TAG, "Failed to get resistance voltage reading"
     );
 
     const float resistance_ohms = (1e6 * voltage / resistance_sensor->injected_current_uA) - resistance_sensor->r_short;

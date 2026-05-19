@@ -4,14 +4,14 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "sensor.h"
+#include "sensor_base.h"
 
 typedef enum : uint8_t {
     CURRENT_SENSOR_A,
 } current_sensor_unit_t;
 
 typedef struct {
-    sensor_t sensor;
+    sensor_base_t base;
     float shunt_resistor_ohms;
     float csa_gain;
     current_sensor_unit_t unit;

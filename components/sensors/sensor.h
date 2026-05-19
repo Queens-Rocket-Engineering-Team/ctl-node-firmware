@@ -1,27 +1,15 @@
 #pragma once
 
-#include <esp_err.h>
-#include <stdbool.h>
-#include <stdint.h>
+#include "current_sensor.h"
+#include "load_cell.h"
+#include "pressure_transducer.h"
+#include "resistance_sensor.h"
+#include "thermocouple.h"
 
-#include "ads112c04.h"
-
-typedef struct {
-    ads112c04_t *adc;
-    ads112c04_pin_t p_pin;
-    ads112c04_pin_t n_pin;
-    uint8_t gain;
-    bool pga_enabled;
+typedef union {
+    thermocouple_t thermocouple;
+    pressure_transducer_t pressure_transducer;
+    load_cell_t load_cell;
+    current_sensor_t current_sensor;
+    resistance_sensor_t resistance_sensor;
 } sensor_t;
-
-typedef struct {
-    ads112c04_t *adc;
-    ads112c04_pin_t p_pin;
-    ads112c04_pin_t n_pin;
-    uint8_t gain;
-    bool pga_enabled;
-} sensor_config_t;
-
-esp_err_t sensor_init(sensor_t *sensor, const sensor_config_t *sensor_cfg);
-
-esp_err_t sensor_voltage_reading(sensor_t *sensor, float *voltage);

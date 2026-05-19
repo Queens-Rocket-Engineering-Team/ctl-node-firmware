@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "sensor.h"
+#include "sensor_base.h"
 
 typedef enum : uint8_t {
     PRESSURE_TRANSDUCER_PSI,
@@ -13,7 +13,7 @@ typedef enum : uint8_t {
 } pressure_transducer_unit_t;
 
 typedef struct {
-    sensor_t sensor;
+    sensor_base_t base;
     float resistor_ohms;
     float max_pressure_psi;
     pressure_transducer_unit_t unit;

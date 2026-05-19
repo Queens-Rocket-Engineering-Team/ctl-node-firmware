@@ -7,11 +7,7 @@
 #include <stdatomic.h>
 
 #include "ads112c04.h"
-#include "current_sensor.h"
-#include "load_cell.h"
-#include "pressure_transducer.h"
-#include "resistance_sensor.h"
-#include "thermocouple.h"
+#include "sensor.h"
 
 #include "config_json.h"
 #include "qlcp_lib.h"

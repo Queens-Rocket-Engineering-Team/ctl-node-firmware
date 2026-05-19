@@ -4,7 +4,7 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "sensor.h"
+#include "sensor_base.h"
 
 typedef enum : uint8_t {
     LOAD_CELL_KG,
@@ -12,7 +12,7 @@ typedef enum : uint8_t {
 } load_cell_unit_t;
 
 typedef struct {
-    sensor_t sensor;
+    sensor_base_t base;
     float load_rating_N;
     float full_scale_V;
     load_cell_unit_t unit;
