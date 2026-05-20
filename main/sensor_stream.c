@@ -20,7 +20,6 @@
 static const char *TAG = "SENSOR STREAM";
 
 typedef struct {
-    SemaphoreHandle_t sensor_read_trigger_semaphore;
     SemaphoreHandle_t sensor_read_done_semaphore;
     sensor_t *sensor;
     float value;
@@ -32,7 +31,7 @@ static void s_read_sensor_task(void *pvParams) {
 
     while (1) {
         // wait until sensor read triggered
-        xSemaphoreTake(ctx->sensor_read_trigger_semaphore, portMAX_DELAY);
+        ulTaskNotifyTake(pdTRUE, portMAX_DELAY);
 
         // get sensor reading
         if (ctx->sensor->base.read_sensor(&ctx->sensor->base, &ctx->value) != ESP_OK) {
@@ -86,27 +85,23 @@ void sensor_stream(void *pvParams) {
 
     // outgoing packet buffer
     static qlcp_sensor_data data[CONFIG_NUM_SENSORS] = {0};
-    // semaphore buffers to notify sensor read tasks
-    static StaticSemaphore_t sensor_read_trigger_semaphore_buffer[CONFIG_NUM_SENSORS];
+    // semaphore buffers to notify stream task
     static StaticSemaphore_t sensor_read_done_semaphore_buffer[CONFIG_NUM_SENSORS];
     // stack for static sensor read tasks
     static StaticTask_t sensor_read_task_buffer[CONFIG_NUM_SENSORS];
     static StackType_t sensor_read_stack[CONFIG_NUM_SENSORS][SENSOR_READ_STACK_SIZE];
+    static TaskHandle_t sensor_read_task_handle[CONFIG_NUM_SENSORS];
     // context for sensor read tasks
     static sensor_ctx_t sensor_ctx[CONFIG_NUM_SENSORS] = {0};
 
     for (size_t i = 0; i < CONFIG_NUM_SENSORS; i++) {
-
-        sensor_ctx[i].sensor_read_trigger_semaphore = xSemaphoreCreateBinaryStatic(
-            &sensor_read_trigger_semaphore_buffer[i]
-        );
         sensor_ctx[i].sensor_read_done_semaphore = xSemaphoreCreateBinaryStatic(&sensor_read_done_semaphore_buffer[i]);
         sensor_ctx[i].sensor = &app_ctx->sensors[i];
 
         char task_name[25];
         snprintf(task_name, sizeof(task_name), "sensor_read_%u", i);
 
-        xTaskCreateStatic(
+        sensor_read_task_handle[i] = xTaskCreateStatic(
             s_read_sensor_task,
             task_name,
             SENSOR_READ_STACK_SIZE,
@@ -142,7 +137,7 @@ void sensor_stream(void *pvParams) {
         
         // start individual sensor read tasks
         for (size_t i = 0; i < CONFIG_NUM_SENSORS; i++) {
-            xSemaphoreGive(sensor_ctx[i].sensor_read_trigger_semaphore);
+            xTaskNotifyGive(sensor_read_task_handle[i]);
         }
 
         // wait until all sensor reads are complete
