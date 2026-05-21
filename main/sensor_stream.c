@@ -126,7 +126,7 @@ void sensor_stream(void *pvParams) {
         );
 
         uint32_t new_frequency;
-        if (xTaskNotifyWait(0, 0, &new_frequency, 0) == pdTRUE) {
+        if (xTaskNotifyWait(0, UINT32_MAX, &new_frequency, 0) == pdTRUE) {
             if (new_frequency > 0) {
                 const uint32_t limited_frequency = (new_frequency < MAX_FREQUENCY ? new_frequency : MAX_FREQUENCY);
                 period_ms = 1000 / limited_frequency;
