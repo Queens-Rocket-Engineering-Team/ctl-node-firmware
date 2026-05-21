@@ -187,10 +187,6 @@ control_fields = {
         'open': 'CONTROL_OPEN',
         'closed': 'CONTROL_CLOSED',
     },
-    'contact': {
-        'solenoid': 'CONTROL_NC',
-        'relay': 'CONTROL_NO',
-    },
 }
 
 def generate_adc_init(adc_cfg: dict, index: int) -> str:
@@ -263,15 +259,11 @@ def generate_control_init(control_cfg: dict, index: int) -> str:
     json_default_state = control_cfg['default_state'].casefold()
     default_state = control_fields['default_state'][json_default_state]
 
-    control_type = control_cfg['type'].casefold()
-    contact = control_fields['contact'][control_type]
-
     return f"""\
     {{
     const control_config_t control_cfg = {{
         .gpio_num = {pin},
         .default_state = {default_state},
-        .contact = {contact},
     }};
 
     ESP_RETURN_ON_ERROR(control_init(&controls[{index}], &control_cfg), TAG, "Failed to initialize control, index {index}");
