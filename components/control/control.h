@@ -10,22 +10,15 @@ typedef enum : uint8_t {
     CONTROL_UNKNOWN,
 } control_state_t;
 
-typedef enum : uint8_t {
-    CONTROL_NO, // actuator normally open
-    CONTROL_NC, // actuator normally closed
-} control_contact_t;
-
 typedef struct {
     gpio_num_t gpio_num;
     control_state_t state;
     control_state_t default_state;
-    control_contact_t contact;
 } control_t;
 
 typedef struct {
     gpio_num_t gpio_num;
     control_state_t default_state;
-    control_contact_t contact;
 } control_config_t;
 
 // Initialize control pin

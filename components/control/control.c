@@ -13,9 +13,9 @@ static esp_err_t s_control_set_state(control_t *control, control_state_t new_sta
     }
 
     uint32_t level;
-    if (control->contact == CONTROL_NO) {      // choose correct gpio level for desired state
-        level = (new_state == CONTROL_CLOSED); // ex. if new_state is closed, level must be high
-    } else if (control->contact == CONTROL_NC) {
+    if (control->default_state == CONTROL_OPEN) { // choose correct gpio level for desired state
+        level = (new_state == CONTROL_CLOSED);    // ex. if new_state is closed, level must be high
+    } else if (control->default_state == CONTROL_CLOSED) {
         level = (new_state == CONTROL_OPEN);
     } else {
         return ESP_ERR_INVALID_ARG;
@@ -49,7 +49,6 @@ esp_err_t control_init(control_t *control, const control_config_t *control_cfg) 
     control->gpio_num = control_cfg->gpio_num;
     control->state = CONTROL_UNKNOWN; // state will be if control_set_state succeeds
     control->default_state = control_cfg->default_state;
-    control->contact = control_cfg->contact;
 
     ESP_RETURN_ON_ERROR(
         s_control_set_state(control, control_cfg->default_state), TAG, "Failed to set default control state"
