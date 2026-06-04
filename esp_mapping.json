@@ -80,8 +80,8 @@
         },
         "LC_FILL": {
             "ADC_index": "ADC1",
-            "p_pin": 1,
-            "n_pin": 0
+            "p_pin": 0,
+            "n_pin": 1
         },
         "IGN_RESIST_READ": {
             "ADC_index": "ADC4",
