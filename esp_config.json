@@ -3,133 +3,120 @@
     "device_type": "Sensor Monitor",
 
     "sensor_info": {
-        "thermocouple": {
-            "TCRun": {
-                "sensor_index": "TC1",
-                "type": "K",
-                "unit": "C"
-            },
-            "TCCombustionChamber": {
-                "sensor_index": "TC2",
-                "type": "K",
-                "unit": "C"
-            }
-        },
-
         "pressure_transducer": {
-            "PTRun": {
+            "PT202": {
                 "sensor_index": "PT1",
                 "resistor_ohms": 250,
-                "max_pressure_PSI": 1000,
-                "unit": "PSI"
+                "max_pressure_PSI" : 1000,
+                "unit" : "PSI"
             },
-            "PTCombustionChamber": {
+            "PT205": {
                 "sensor_index": "PT2",
                 "resistor_ohms": 250,
-                "max_pressure_PSI": 1000,
-                "unit": "PSI"
+                "max_pressure_PSI" : 1000,
+                "unit" : "PSI"
             },
-            "PTPreInjector": {
+            "PT203": {
                 "sensor_index": "PT3",
                 "resistor_ohms": 250,
-                "max_pressure_PSI": 1000,
-                "unit": "PSI"
+                "max_pressure_PSI" : 1000,
+                "unit" : "PSI"
             },
-            "PTN2OSupply": {
+            "PT201": {
                 "sensor_index": "PT4",
                 "resistor_ohms": 250,
-                "max_pressure_PSI": 1000,
-                "unit": "PSI"
+                "max_pressure_PSI" : 1000,
+                "unit" : "PSI"
             },
-            "PTN2Supply": {
+            "PT101": {
                 "sensor_index": "PT5",
                 "resistor_ohms": 250,
-                "max_pressure_PSI": 200,
-                "unit": "PSI"
+                "max_pressure_PSI" : 200,
+                "unit" : "PSI"
             }
         },
 
         "load_cell": {
             "LCFill": {
                 "sensor_index": "LC_FILL",
-                "load_rating_N": 1962,
-                "excitation_V": 5,
-                "sensitivity_vV": 2,
-                "unit": "kg"
+                "load_rating_N" : 1962,
+                "excitation_V" : 5,
+                "sensitivity_vV" : 2,
+                "unit" : "kg"
             },
             "LCThrust": {
                 "sensor_index": "LC_THRUST",
-                "load_rating_N": 5000,
-                "excitation_V": 5,
-                "sensitivity_vV": 2,
-                "unit": "kg"
+                "load_rating_N" : 29430,
+                "excitation_V" : 5,
+                "sensitivity_vV" : 2,
+                "unit" : "kg"
             }
         },
 
-        "resistance_sensor": {
-            "ignResistance": {
+        "resistance_sensor" : {
+            "ignResistance" : {
                 "sensor_index": "IGN_RESIST_READ",
-                "injected_current_uA": 1500,
+                "injected_current_uA": 0,
                 "r_short": 47.683718,
-                "unit": "ohms"
+                "unit" : "ohms"
             }
         },
 
-        "current_sensor": {
-            "ignCurrent": {
+        "current_sensor" : {
+            "ignCurrent" : {
                 "sensor_index": "IGN_CURRENT_READ",
-                "shunt_resistor_ohms": 0.025,
-                "csa_gain": 20,
-                "unit": "A"
+                "shunt_resistor_ohms" : 0.025,
+                "csa_gain" : 20,
+                "unit" : "A"
             }
         }
     },
 
     "controls": {
-        "AVN2OFill": {
+        "AV201": {
             "control_index": "AV_FILL",
             "default_state": "CLOSED",
             "type": "solenoid"
         },
-        "AVRun": {
+        "AV205": {
             "control_index": "AV_RUN",
             "default_state": "CLOSED",
             "type": "solenoid"
         },
-        "AVVent": {
+        "AV204": {
             "control_index": "AV3",
             "default_state": "OPEN",
             "type": "solenoid"
         },
-        "AVN2Fill": {
+        "AV203": {
             "control_index": "AV4",
-            "default_state": "OPEN",
+            "default_state": "CLOSED",
             "type": "solenoid"
         },
-        "AVPurge": {
+        "AV101": {
             "control_index": "AV5",
             "default_state": "OPEN",
             "type": "solenoid"
         },
-        "AVDump": {
+        "AV202": {
             "control_index": "AV6",
-            "default_state": "OPEN",
+            "default_state" : "CLOSED",
             "type": "solenoid"
         },
         "Safe24": {
             "control_index": "SAFE_24V_CTL",
-            "default_state": "OPEN",
-            "type": "relay"
+            "default_state" : "OPEN",
+            "type" : "relay"
         },
         "IgnPrime": {
             "control_index": "IGNITOR_PRIME_CTL",
-            "default_state": "OPEN",
-            "type": "relay"
+            "default_state" : "OPEN",
+            "type" : "relay"
         },
         "IgnRun": {
             "control_index": "IGNITOR_RUN_CTL",
-            "default_state": "OPEN",
-            "type": "relay"
+            "default_state" : "OPEN",
+            "type" : "relay"
         }
     }
 }
