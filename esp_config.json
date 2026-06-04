@@ -56,7 +56,7 @@
         "resistance_sensor" : {
             "ignResistance" : {
                 "sensor_index": "IGN_RESIST_READ",
-                "injected_current_uA": 0,
+                "injected_current_uA": 1500,
                 "r_short": 47.683718,
                 "unit" : "ohms"
             }

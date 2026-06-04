@@ -13,9 +13,13 @@
 #include "qlcp_lib.h"
 #include "sensor_stream.h"
 #include "setup.h"
+#include "wifi_tools.h"
 
 #define SENSOR_READ_STACK_SIZE 4096
 #define MAX_FREQUENCY 250
+#define RING_BUFFER_LEN (UDP_SEND_QUEUE_LEN + 2)
+// +2 to account for packet taken out of queue by
+// udp_send + extra packet to write to when queue is full
 
 static const char *TAG = "SENSOR STREAM";
 
@@ -84,7 +88,7 @@ void sensor_stream(void *pvParams) {
     app_ctx_t *app_ctx = (app_ctx_t *)pvParams;
 
     // outgoing packet buffer
-    static qlcp_sensor_data data[CONFIG_NUM_SENSORS] = {0};
+    static qlcp_sensor_data data_ring_buffer[RING_BUFFER_LEN][CONFIG_NUM_SENSORS] = {0};
     // semaphore buffers to notify stream task
     static StaticSemaphore_t sensor_read_done_semaphore_buffer[CONFIG_NUM_SENSORS];
     // stack for static sensor read tasks
@@ -94,6 +98,7 @@ void sensor_stream(void *pvParams) {
     // context for sensor read tasks
     static sensor_ctx_t sensor_ctx[CONFIG_NUM_SENSORS] = {0};
 
+    uint32_t data_idx = 0;
     for (size_t i = 0; i < CONFIG_NUM_SENSORS; i++) {
         sensor_ctx[i].sensor_read_done_semaphore = xSemaphoreCreateBinaryStatic(&sensor_read_done_semaphore_buffer[i]);
         sensor_ctx[i].sensor = &app_ctx->sensors[i];
@@ -124,6 +129,8 @@ void sensor_stream(void *pvParams) {
             pdFALSE,
             portMAX_DELAY
         );
+        
+        qlcp_sensor_data *data = data_ring_buffer[data_idx];
 
         uint32_t new_frequency;
         if (xTaskNotifyWait(0, UINT32_MAX, &new_frequency, 0) == pdTRUE) {
@@ -134,7 +141,7 @@ void sensor_stream(void *pvParams) {
                 xLastWakeTime = xTaskGetTickCount(); // update timestamp to avoid double sending packets on change
             }
         }
-        
+
         // start individual sensor read tasks
         for (size_t i = 0; i < CONFIG_NUM_SENSORS; i++) {
             xTaskNotifyGive(sensor_read_task_handle[i]);
@@ -166,9 +173,10 @@ void sensor_stream(void *pvParams) {
                        },
         };
         // send data packets to the udp send queue
-        xQueueSend(app_ctx->network_ctx->udp_send_queue_handle, (void *)&data_packet, MESSAGE_QUEUE_TIMEOUT);
-        // binary semaphore to prevent proceeding before data sent
-        xSemaphoreTake(app_ctx->network_ctx->udp_send_semaphore_handle, pdMS_TO_TICKS(50));
+        if (xQueueSend(app_ctx->network_ctx->udp_send_queue_handle, (void *)&data_packet, MESSAGE_QUEUE_TIMEOUT) == pdTRUE) {
+            data_idx = (data_idx + 1) % RING_BUFFER_LEN;
+        }
+        // if the queue is full and can't get another packet added, ring buffer index will be reused
 
         // if single reading, clear bit to avoid relooping
         if (xEventGroupGetBits(app_ctx->sensor_stream_event_group_handle) & SENSORS_SINGLE_READING_BIT) {

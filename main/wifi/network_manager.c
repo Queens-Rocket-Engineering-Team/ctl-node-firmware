@@ -19,13 +19,8 @@
 #define TCP_SEND_STACK_SIZE 4096
 #define UDP_SEND_STACK_SIZE 4096
 
-#define TCP_RECV_QUEUE_LEN 10
 #define TCP_RECV_QUEUE_ITEM_SIZE sizeof(qlcp_client_payload)
-
-#define TCP_SEND_QUEUE_LEN 10
 #define TCP_SEND_QUEUE_ITEM_SIZE sizeof(qlcp_server_payload)
-
-#define UDP_SEND_QUEUE_LEN 10
 #define UDP_SEND_QUEUE_ITEM_SIZE sizeof(qlcp_data_packet)
 
 static const char *TAG = "NETWORK MANAGER";
@@ -65,11 +60,6 @@ esp_err_t network_manager_init(network_ctx_t *network_ctx) {
         UDP_SEND_QUEUE_LEN, UDP_SEND_QUEUE_ITEM_SIZE, ucQueueStorageArea_UDPSEND, &xStaticQueue_UDPSEND
     );
     configASSERT(network_ctx->udp_send_queue_handle);
-
-    // set up binary semaphore for sensor data
-    static StaticSemaphore_t xStaticSemaphoreBuffer_UDPSEND;
-    network_ctx->udp_send_semaphore_handle = xSemaphoreCreateBinaryStatic(&xStaticSemaphoreBuffer_UDPSEND);
-    configASSERT(network_ctx->udp_send_semaphore_handle);
 
     // set up event group for wifi connection status
     static StaticEventGroup_t xEventGroup_WIFI;
