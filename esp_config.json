@@ -47,15 +47,6 @@
             }
         },
 
-        "resistance_sensor" : {
-            "ignResistance" : {
-                "sensor_index": "IGN_RESIST_READ",
-                "injected_current_uA": 1500,
-                "r_short": 47.683718,
-                "unit" : "ohms"
-            }
-        },
-
         "current_sensor" : {
             "ignCurrent" : {
                 "sensor_index": "IGN_CURRENT_READ",
@@ -94,7 +85,7 @@
         },
         "AV202": {
             "control_index": "AV6",
-            "default_state" : "CLOSED",
+            "default_state" : "OPEN",
             "type": "solenoid"
         },
         "Safe24": {
