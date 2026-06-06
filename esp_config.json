@@ -4,34 +4,28 @@
 
     "sensor_info": {
         "pressure_transducer": {
-            "PT202": {
+            "PT101": {
                 "sensor_index": "PT1",
                 "resistor_ohms": 250,
-                "max_pressure_PSI" : 1000,
+                "max_pressure_PSI" : 200,
                 "unit" : "PSI"
             },
-            "PT205": {
+            "PT201": {
                 "sensor_index": "PT2",
                 "resistor_ohms": 250,
                 "max_pressure_PSI" : 1000,
                 "unit" : "PSI"
             },
-            "PT203": {
+            "PT202": {
                 "sensor_index": "PT3",
                 "resistor_ohms": 250,
                 "max_pressure_PSI" : 1000,
                 "unit" : "PSI"
             },
-            "PT201": {
-                "sensor_index": "PT4",
-                "resistor_ohms": 250,
-                "max_pressure_PSI" : 1000,
-                "unit" : "PSI"
-            },
-            "PT101": {
+            "PT204": {
                 "sensor_index": "PT5",
                 "resistor_ohms": 250,
-                "max_pressure_PSI" : 200,
+                "max_pressure_PSI" : 1000,
                 "unit" : "PSI"
             }
         },
