@@ -16,7 +16,7 @@
 #include "wifi_tools.h"
 
 #define SENSOR_READ_STACK_SIZE 2048
-#define MAX_FREQUENCY 250
+#define MAX_FREQUENCY 1000UL
 #define RING_BUFFER_LEN (UDP_SEND_QUEUE_LEN + 2)
 // +2 to account for packet taken out of queue by
 // udp_send + extra packet to write to when queue is full

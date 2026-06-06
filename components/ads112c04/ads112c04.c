@@ -86,7 +86,7 @@ esp_err_t ads112c04_init(ads112c04_t *ads112c04, const ads112c04_config_t *ads11
 
     // set default configuration values
     uint8_t reg1 = 0;
-    reg1 |= (0x06 << 5) & DR_MASK; // set to 1000SPS
+    reg1 |= (0x06 << 5) & DR_MASK; // set to 2000SPS
     reg1 |= (0x01 << 4) & MODE_MASK;
     reg1 |= (0x00 << 3) & CM_MASK;   // set to single shot mode
     reg1 |= (0x02 << 1) & VREF_MASK; // set ref voltage to AVDD-AVSS
