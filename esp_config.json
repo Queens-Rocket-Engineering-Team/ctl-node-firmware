@@ -13,14 +13,14 @@
             "PT201": {
                 "sensor_index": "PT2",
                 "resistor_ohms": 250,
-                "max_pressure_PSI" : 1000,
-                "unit" : "PSI"
+                "max_pressure_PSI": 1000,
+                "unit": "PSI"
             },
             "PT202": {
                 "sensor_index": "PT3",
                 "resistor_ohms": 250,
-                "max_pressure_PSI" : 1000,
-                "unit" : "PSI"
+                "max_pressure_PSI": 1000,
+                "unit": "PSI"
             },
             "PT204": {
                 "sensor_index": "PT5",
@@ -33,10 +33,10 @@
         "load_cell": {
             "LCFill": {
                 "sensor_index": "LC_FILL",
-                "load_rating_N" : 1962,
-                "excitation_V" : 5,
-                "sensitivity_vV" : 2,
-                "unit" : "kg"
+                "load_rating_N": 1962,
+                "excitation_V": 5,
+                "sensitivity_vV": 2,
+                "unit": "kg"
             },
             "LCThrust": {
                 "sensor_index": "LC_THRUST",
@@ -50,9 +50,9 @@
         "current_sensor" : {
             "ignCurrent" : {
                 "sensor_index": "IGN_CURRENT_READ",
-                "shunt_resistor_ohms" : 0.025,
-                "csa_gain" : 20,
-                "unit" : "A"
+                "shunt_resistor_ohms": 0.025,
+                "csa_gain": 20,
+                "unit": "A"
             }
         }
     },
@@ -85,23 +85,23 @@
         },
         "AV202": {
             "control_index": "AV6",
-            "default_state" : "OPEN",
+            "default_state": "OPEN",
             "type": "solenoid"
         },
         "Safe24": {
             "control_index": "SAFE_24V_CTL",
-            "default_state" : "OPEN",
-            "type" : "relay"
+            "default_state": "OPEN",
+            "type": "relay"
         },
         "IgnPrime": {
             "control_index": "IGNITOR_PRIME_CTL",
-            "default_state" : "OPEN",
-            "type" : "relay"
+            "default_state": "OPEN",
+            "type": "relay"
         },
         "IgnRun": {
             "control_index": "IGNITOR_RUN_CTL",
-            "default_state" : "OPEN",
-            "type" : "relay"
+            "default_state": "OPEN",
+            "type": "relay"
         }
     }
 }

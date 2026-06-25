@@ -1,4 +1,4 @@
-# Project name here (undecided)
+# Launch Control Node Firmware
 This repository contains the ESP32 firmware for Launch Control's control nodes. These nodes function as the interface between remote commands and the launch hardware.
 
 Control nodes are not autonomous, and require commands from the external control server to operate. Control nodes can aqcuire sensor readings and actuate controls remotely. The firmware uses two JSON configuration files to generate initialization code for different board configurations during the build process, allowing sensor and control configurations to be implemented for different hardware setups.
