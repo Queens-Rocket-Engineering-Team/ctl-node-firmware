@@ -4,24 +4,23 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "sensor.h"
+#include "sensor_base.h"
 
-typedef enum : uint8_t {
-    THERMOCOUPLE_C,
-    THERMOCOUPLE_K,
-    THERMOCOUPLE_F,
-} thermocouple_unit_t;
+typedef enum {
+    THERMOCOUPLE_TYPE_K,
+} thermocouple_type_t;
 
 typedef struct {
-    sensor_t sensor;
-    thermocouple_unit_t unit;
+    sensor_base_t base;
+    thermocouple_type_t type;
 } thermocouple_t;
 
 typedef struct {
     ads112c04_t *adc;
     ads112c04_pin_t p_pin;
     ads112c04_pin_t n_pin;
-    thermocouple_unit_t unit;
+    sensor_unit_t unit;
+    thermocouple_type_t type;
 } thermocouple_config_t;
 
 esp_err_t thermocouple_init(thermocouple_t *thermocouple, const thermocouple_config_t *thermocouple_cfg);

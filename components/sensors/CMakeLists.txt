@@ -1,6 +1,14 @@
 idf_component_register(
-    SRCS "sensor.c" "pressure_transducer.c" "thermocouple.c" "load_cell.c" "resistance_sensor.c" "current_sensor.c"
-    INCLUDE_DIRS .
+    SRCS
+    "sensor_base.c"
+    "sensor_types/pressure_transducer.c"
+    "sensor_types/thermocouple.c"
+    "sensor_types/load_cell.c"
+    "sensor_types/resistance_sensor.c"
+    "sensor_types/current_sensor.c"
+    INCLUDE_DIRS
+    "."
+    "./sensor_types"
     REQUIRES
     ads112c04
 )

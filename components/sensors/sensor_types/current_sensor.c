@@ -5,16 +5,24 @@
 
 #include "ads112c04.h"
 #include "current_sensor.h"
-#include "sensor.h"
+#include "sensor_base.h"
 
 static const char *TAG = "CURRENT SENSOR";
+
+static esp_err_t read_sensor(sensor_base_t *base, float *value) {
+    if (base == NULL || value == NULL) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    // cast base to current_sensor_t, since it is the first member of struct
+    return get_current_reading((current_sensor_t *)base, value);
+}
 
 esp_err_t current_sensor_init(current_sensor_t *current_sensor, const current_sensor_config_t *current_sensor_cfg) {
     if (current_sensor == NULL || current_sensor_cfg == NULL) {
         return ESP_ERR_INVALID_ARG;
     }
 
-    const sensor_config_t sensor_cfg = {
+    const sensor_base_config_t base_cfg = {
         .adc = current_sensor_cfg->adc,
         .p_pin = current_sensor_cfg->pin,
         .n_pin = ADS112C04_AVSS,
@@ -22,11 +30,12 @@ esp_err_t current_sensor_init(current_sensor_t *current_sensor, const current_se
         .pga_enabled = false,
     };
 
-    ESP_RETURN_ON_ERROR(sensor_init(&current_sensor->sensor, &sensor_cfg), TAG, "Failed to initialize current sensor");
+    ESP_RETURN_ON_ERROR(sensor_base_init(&current_sensor->base, &base_cfg), TAG, "Failed to initialize current sensor");
 
+    current_sensor->base.read_sensor = read_sensor;
     current_sensor->shunt_resistor_ohms = current_sensor_cfg->shunt_resistor_ohms;
     current_sensor->csa_gain = current_sensor_cfg->csa_gain;
-    current_sensor->unit = current_sensor_cfg->unit;
+    current_sensor->base.unit = current_sensor_cfg->unit;
     return ESP_OK;
 }
 
@@ -37,11 +46,13 @@ esp_err_t get_current_reading(current_sensor_t *current_sensor, float *current) 
 
     float voltage = 0;
     ESP_RETURN_ON_ERROR(
-        sensor_voltage_reading(&current_sensor->sensor, &voltage), TAG, "Failed to get current sensor voltage reading"
+        sensor_base_voltage_reading(&current_sensor->base, &voltage),
+        TAG,
+        "Failed to get current sensor voltage reading"
     );
 
     const float current_A = (voltage / current_sensor->shunt_resistor_ohms) / current_sensor->csa_gain;
-    if (current_sensor->unit == CURRENT_SENSOR_A) {
+    if (current_sensor->base.unit == SENSOR_UNIT_A) {
         *current = current_A;
     } else {
         return ESP_ERR_INVALID_ARG;

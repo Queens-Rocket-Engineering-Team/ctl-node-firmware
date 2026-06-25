@@ -4,18 +4,12 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "sensor.h"
-
-typedef enum : uint8_t {
-    LOAD_CELL_KG,
-    LOAD_CELL_N,
-} load_cell_unit_t;
+#include "sensor_base.h"
 
 typedef struct {
-    sensor_t sensor;
+    sensor_base_t base;
     float load_rating_N;
     float full_scale_V;
-    load_cell_unit_t unit;
 } load_cell_t;
 
 typedef struct {
@@ -25,7 +19,7 @@ typedef struct {
     float load_rating_N;
     float excitation_V;
     float sensitivity_vV;
-    load_cell_unit_t unit;
+    sensor_unit_t unit;
 } load_cell_config_t;
 
 esp_err_t load_cell_init(load_cell_t *load_cell, const load_cell_config_t *load_cell_cfg);

@@ -9,6 +9,10 @@
 
 #define MESSAGE_QUEUE_TIMEOUT (pdMS_TO_TICKS(10))
 
+#define TCP_RECV_QUEUE_LEN 10
+#define TCP_SEND_QUEUE_LEN 10
+#define UDP_SEND_QUEUE_LEN 10
+
 #define SERVER_CONNECTED_BIT 1
 
 enum {
@@ -31,7 +35,6 @@ typedef struct {
     QueueHandle_t tcp_recv_queue_handle;
     QueueHandle_t tcp_send_queue_handle;
     QueueHandle_t udp_send_queue_handle;
-    SemaphoreHandle_t udp_send_semaphore_handle;
     EventGroupHandle_t wifi_event_group_handle;
     TaskHandle_t network_manager_handle;
     TaskHandle_t tcp_recv_handle;

@@ -5,12 +5,20 @@
 #include <stdint.h>
 
 #include "ads112c04.h"
-#include "sensor.h"
+#include "sensor_base.h"
 #include "thermocouple.h"
 
 static const char *TAG = "PRESSURE TRANSDUCER";
 
-// Temperature to voltage coefficients
+static esp_err_t read_sensor(sensor_base_t *base, float *value) {
+    if (base == NULL || value == NULL) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    // cast base to current_sensor_t, since it is the first member of struct
+    return get_thermocouple_reading((thermocouple_t *)base, value);
+}
+
+// temperature to voltage coefficients
 
 static const float cP[] = {
     -1.76e-02,
@@ -45,7 +53,7 @@ static const float cN[] = {
     -1.63e-23,
 };
 
-// Voltage to temperature coefficients
+// voltage to temperature coefficients
 
 static const float d1[] = {
     0.0000000E+00,
@@ -92,7 +100,7 @@ static float s_poly_eval(float x, const float coeffs[], size_t coeffs_len) {
 }
 
 static float s_temperature_to_voltage(float temperature) {
-    // Equations from the NIST Temperature Scale Database:
+    // equations from the NIST Temperature Scale Database:
     // https://its90.nist.gov/RefFunctions
     float voltage_mV = 0;
     if (temperature > 0) {
@@ -105,7 +113,7 @@ static float s_temperature_to_voltage(float temperature) {
 }
 
 static float s_voltage_to_temperature(float voltage_mV) {
-    // Equations from the NIST Temperature Scale Database:
+    // equations from the NIST Temperature Scale Database:
     // https://its90.nist.gov/InvFunctions
     float temperature = 0;
     if (voltage_mV < 0.0f) {
@@ -123,7 +131,7 @@ esp_err_t thermocouple_init(thermocouple_t *thermocouple, const thermocouple_con
         return ESP_ERR_INVALID_ARG;
     }
 
-    const sensor_config_t sensor_cfg = {
+    const sensor_base_config_t base_cfg = {
         .adc = thermocouple_cfg->adc,
         .p_pin = thermocouple_cfg->p_pin,
         .n_pin = thermocouple_cfg->n_pin,
@@ -132,22 +140,24 @@ esp_err_t thermocouple_init(thermocouple_t *thermocouple, const thermocouple_con
     };
 
     ESP_RETURN_ON_ERROR(
-        sensor_init(&thermocouple->sensor, &sensor_cfg), TAG, "Failed to initialize thermocouple sensor"
+        sensor_base_init(&thermocouple->base, &base_cfg), TAG, "Failed to initialize thermocouple sensor"
     );
 
-    thermocouple->unit = thermocouple_cfg->unit;
+    thermocouple->base.read_sensor = read_sensor;
+    thermocouple->base.unit = thermocouple_cfg->unit;
+    thermocouple->type = thermocouple_cfg->type; // currently unused, only supports type K
     return ESP_OK;
 }
 
 esp_err_t get_thermocouple_reading(thermocouple_t *thermocouple, float *temperature) {
     float voltage = 0;
     ESP_RETURN_ON_ERROR(
-        sensor_voltage_reading(&thermocouple->sensor, &voltage), TAG, "Failed to get thermocouple voltage reading"
+        sensor_base_voltage_reading(&thermocouple->base, &voltage), TAG, "Failed to get thermocouple voltage reading"
     );
 
     float cjc_temp = 0;
     ESP_RETURN_ON_ERROR(
-        ads112c04_get_single_temperature_reading(thermocouple->sensor.adc, &cjc_temp),
+        ads112c04_get_single_temperature_reading(thermocouple->base.adc, &cjc_temp),
         TAG,
         "Failed to get CJC temperature reading"
     );
@@ -156,11 +166,11 @@ esp_err_t get_thermocouple_reading(thermocouple_t *thermocouple, float *temperat
     const float thermocouple_voltage_mV = voltage * 1000 + cjc_voltage_mV;
     const float temp_C = s_voltage_to_temperature(thermocouple_voltage_mV);
 
-    if (thermocouple->unit == THERMOCOUPLE_C) {
+    if (thermocouple->base.unit == SENSOR_UNIT_C) {
         *temperature = temp_C;
-    } else if (thermocouple->unit == THERMOCOUPLE_K) {
+    } else if (thermocouple->base.unit == SENSOR_UNIT_K) {
         *temperature = temp_C + 273.15;
-    } else if (thermocouple->unit == THERMOCOUPLE_F) {
+    } else if (thermocouple->base.unit == SENSOR_UNIT_F) {
         *temperature = (temp_C * 1.8) + 32;
     } else {
         return ESP_ERR_INVALID_ARG;
