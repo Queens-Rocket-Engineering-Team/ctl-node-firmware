@@ -1,5 +1,0 @@
-PTCombustionChamber -> A3 P0 -> PT2
-PTN2OSupply 		-> A4 P0 -> PT6
-PTN2Supply 		    -> A4 P1 -> PT5
-PTPreInjector 		-> A4 P2 -> PT4
-PTRun 			    -> A4 P3 -> PT3

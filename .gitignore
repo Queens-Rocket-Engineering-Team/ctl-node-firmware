@@ -1,4 +1,6 @@
-__pycache__/
-TestingData/
 build/
-*.egg-info
+managed_components/
+.vscode/
+sdkconfig.local
+sdkconfig
+sdkconfig.old

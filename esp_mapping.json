@@ -1,0 +1,124 @@
+{
+    "i2c_bus": {
+        "sda_pin": 9,
+        "scl_pin": 10,
+        "frequency_Hz": 100000
+    },
+    "wifi_indicator_pin": 1,
+
+    "ADC_map": {
+        "ADC1": {
+            "addr": 64,
+            "DRDY_pin": 21
+        },
+        "ADC2": {
+            "addr": 65,
+            "DRDY_pin": 12
+        },
+        "ADC3": {
+            "addr": 66,
+            "DRDY_pin": 14
+        },
+        "ADC4": {
+            "addr": 68,
+            "DRDY_pin": 11
+        },
+        "ADC5": {
+            "addr": 69,
+            "DRDY_pin": 13
+        }
+    },
+    "sensor_map": {
+        "TC1": {
+            "ADC_index": "ADC5",
+            "p_pin": 3,
+            "n_pin": 2
+        },
+        "TC2": {
+            "ADC_index": "ADC5",
+            "p_pin": 1,
+            "n_pin": 0
+        },
+        "TC3": {
+            "ADC_index": "ADC3",
+            "p_pin": 3,
+            "n_pin": 2
+        },
+        "TC4": {
+            "ADC_index": "ADC3",
+            "p_pin": 1,
+            "n_pin": 0
+        },
+        "PT1": {
+            "ADC_index": "ADC4",
+            "pin": 0
+        },
+        "PT2": {
+            "ADC_index": "ADC4",
+            "pin": 1
+        },
+        "PT3": {
+            "ADC_index": "ADC2",
+            "pin": 2
+        },
+        "PT4": {
+            "ADC_index": "ADC2",
+            "pin": 3
+        },
+        "PT5": {
+            "ADC_index": "ADC2",
+            "pin": 0
+        },
+        "PT6": {
+            "ADC_index": "ADC2",
+            "pin": 1
+        },
+        "LC_THRUST": {
+            "ADC_index": "ADC1",
+            "p_pin": 3,
+            "n_pin": 2
+        },
+        "LC_FILL": {
+            "ADC_index": "ADC1",
+            "p_pin": 1,
+            "n_pin": 0
+        },
+        "IGN_RESIST_READ": {
+            "ADC_index": "ADC4",
+            "pin": 3
+        },
+        "IGN_CURRENT_READ": {
+            "ADC_index": "ADC4",
+            "pin": 2
+        }
+    },
+    "control_map": {
+        "AV_FILL": {
+            "pin": 38
+        },
+        "AV_RUN": {
+            "pin": 39
+        },
+        "AV3": {
+            "pin": 40
+        },
+        "AV4": {
+            "pin": 41
+        },
+        "AV5": {
+            "pin": 42
+        },
+        "AV6": {
+            "pin": 2
+        },
+        "SAFE_24V_CTL": {
+            "pin": 4
+        },
+        "IGNITOR_PRIME_CTL": {
+            "pin": 6
+        },
+        "IGNITOR_RUN_CTL": {
+            "pin": 5
+        }
+    }
+}
