@@ -1,5 +1,3 @@
-set(CONFIG ${CMAKE_SOURCE_DIR}/esp_config.json)
-set(MAPPING ${CMAKE_SOURCE_DIR}/esp_mapping.json)
 set(CONFIG_CONVERT ${CMAKE_CURRENT_SOURCE_DIR}/esp_config_generate.py)
 
 set(CONFIG_HEADER ${CMAKE_CURRENT_BINARY_DIR}/config_json.h)
@@ -19,8 +17,8 @@ idf_build_get_property(python PYTHON)
 add_custom_command(
     OUTPUT "${CONFIG_HEADER}" "${CONFIG_SOURCE}"
     COMMAND ${python} "${CONFIG_CONVERT}"
-            "${CONFIG}"
-            "${MAPPING}"
+            "${BOARD_CONFIG}"
+            "${BOARD_MAPPING}"
             "${CONFIG_HEADER}"
             "${CONFIG_SOURCE}"
     DEPENDS "${CONFIG}" "${MAPPING}" "${CONFIG_CONVERT}"
