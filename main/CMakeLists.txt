@@ -5,6 +5,7 @@ idf_component_register(
     control
     ads112c04
     config_json
+    boards
     qlcp_lib
     esp_common
     esp_driver_i2c

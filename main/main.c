@@ -11,6 +11,7 @@
 #include "sensor_stream.h"
 #include "setup.h"
 #include "wifi_tools.h"
+#include "board_setup.h"
 
 #define WATCHDOG_RESET_TIMEOUT_MIN 5
 #define WATCHDOG_RESET_TIMEOUT_US (WATCHDOG_RESET_TIMEOUT_MIN * 60 * 1000000ULL)
@@ -21,6 +22,7 @@ void app_main(void) {
 
     static app_ctx_t app_ctx = {0};
 
+    ESP_ERROR_CHECK(board_setup());
     ESP_ERROR_CHECK(app_setup(&app_ctx));
     ESP_LOGI(TAG, "Setup complete");
 

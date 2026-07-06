@@ -9,8 +9,12 @@ if(NOT DEFINED BOARD)
     )
 endif()
 
-set(BOARD_CONFIG "${CMAKE_SOURCE_DIR}/boards/${TARGET_BOARD}/esp_config.json")
-set(BOARD_MAPPING "${CMAKE_SOURCE_DIR}/boards/${TARGET_BOARD}/esp_mapping.json")
+# set the config and mapping files for the board
+set(BOARD_CONFIG "${CMAKE_SOURCE_DIR}/boards/${BOARD}/esp_config.json")
+set(BOARD_MAPPING "${CMAKE_SOURCE_DIR}/boards/${BOARD}/esp_mapping.json")
+
+# add the boards folder as a component directory for the board specific code
+set(EXTRA_COMPONENT_DIRS "${CMAKE_SOURCE_DIR}/boards")
 
 include($ENV{IDF_PATH}/tools/cmake/project.cmake)
 project(ctl-control-node LANGUAGES C)
