@@ -22,6 +22,12 @@
                 "max_pressure_PSI": 1000,
                 "unit": "PSI"
             },
+            "PT203": {
+                "sensor_index": "PT4",
+                "resistor_ohms": 250,
+                "max_pressure_PSI": 1000,
+                "unit": "PSI"
+            },
             "PT204": {
                 "sensor_index": "PT5",
                 "resistor_ohms": 250,
