@@ -49,7 +49,7 @@
                 "load_rating_N" : 29430,
                 "excitation_V" : 5,
                 "sensitivity_vV" : 2,
-                "unit" : "kg"
+                "unit" : "n"
             }
         },
 
