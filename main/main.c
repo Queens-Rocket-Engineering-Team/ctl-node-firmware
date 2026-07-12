@@ -45,14 +45,14 @@ void app_main(void) {
             last_packet_time_us = esp_timer_get_time();
             payload_out.packet_type = QLCP_PT_CONFIG;
 
-            const uint16_t sequence = atomic_fetch_add(&app_ctx.sequence, 1);
+            const uint8_t sequence = atomic_fetch_add(&app_ctx.sequence, 1);
 
             const qlcp_config_packet config = {
                 .config_data = json_config_str,
                 .config_data_len = JSON_CONFIG_LEN,
                 .header = {
                            .sequence = sequence,
-                           .timestamp = 0,
+                           .timestamp_us = 0,
                            },
             };
             payload_out.payload_data.config = config;
@@ -66,7 +66,6 @@ void app_main(void) {
             for (size_t i = 0; i < CONFIG_NUM_CONTROLS; i++) {
                 control_set_default(&app_ctx.controls[i]);
             }
-            xEventGroupClearBits(app_ctx.sensor_stream_event_group_handle, SENSOR_STREAM_ENABLE_BIT);
             ESP_LOGW(TAG, "Software watchdog triggered, reset to default state");
             last_packet_time_us = esp_timer_get_time();
         }
@@ -85,21 +84,20 @@ void app_main(void) {
                 continue;
 
             case QLCP_PT_TIMESYNC: {
-                const uint32_t new_ts_offset = payload_in.payload_data.header_only.timestamp -
-                                               (uint32_t)(esp_timer_get_time() / 1000);
+                const uint64_t new_ts_offset = payload_in.payload_data.header_only.timestamp - esp_timer_get_time();
                 atomic_store(&app_ctx.ts_offset, new_ts_offset);
                 payload_out.packet_type = QLCP_PT_ACK;
 
-                const uint32_t current_ts_offset = atomic_load(&app_ctx.ts_offset);
-                const uint32_t timestamp = current_ts_offset + (uint32_t)(esp_timer_get_time() / 1000);
-                const uint16_t sequence = atomic_fetch_add(&app_ctx.sequence, 1);
+                const uint64_t current_ts_offset = atomic_load(&app_ctx.ts_offset);
+                const uint64_t timestamp_us = current_ts_offset + esp_timer_get_time();
+                const uint8_t sequence = atomic_fetch_add(&app_ctx.sequence, 1);
 
                 const qlcp_ack_packet ack = {
                     .ack_packet_type = QLCP_PT_TIMESYNC,
                     .ack_sequence = payload_in.payload_data.header_only.sequence,
                     .header = {
                                .sequence = sequence,
-                               .timestamp = timestamp,
+                               .timestamp_us = timestamp_us,
                                },
                 };
                 payload_out.payload_data.ack = ack;
@@ -120,29 +118,25 @@ void app_main(void) {
                     nack_error_code = QLCP_ERR_INVALID_PARAM;
                 }
 
+                const uint64_t current_ts_offset = atomic_load(&app_ctx.ts_offset);
+                const uint64_t timestamp_us = current_ts_offset + esp_timer_get_time();
+                const uint8_t sequence = atomic_fetch_add(&app_ctx.sequence, 1);
+
                 ESP_ERROR_CHECK_WITHOUT_ABORT(err);
                 if (err == ESP_OK) {
                     payload_out.packet_type = QLCP_PT_ACK;
-
-                    const uint32_t current_ts_offset = atomic_load(&app_ctx.ts_offset);
-                    const uint32_t timestamp = current_ts_offset + (uint32_t)(esp_timer_get_time() / 1000);
-                    const uint16_t sequence = atomic_fetch_add(&app_ctx.sequence, 1);
 
                     const qlcp_ack_packet ack = {
                         .ack_packet_type = QLCP_PT_CONTROL,
                         .ack_sequence = payload_in.payload_data.header_only.sequence,
                         .header = {
                                    .sequence = sequence,
-                                   .timestamp = timestamp,
+                                   .timestamp_us = timestamp_us,
                                    },
                     };
                     payload_out.payload_data.ack = ack;
                 } else {
                     payload_out.packet_type = QLCP_PT_NACK;
-
-                    const uint32_t current_ts_offset = atomic_load(&app_ctx.ts_offset);
-                    const uint32_t timestamp = current_ts_offset + (uint32_t)(esp_timer_get_time() / 1000);
-                    const uint16_t sequence = atomic_fetch_add(&app_ctx.sequence, 1);
 
                     const qlcp_nack_packet nack = {
                         .nack_packet_type = QLCP_PT_CONTROL,
@@ -150,7 +144,7 @@ void app_main(void) {
                         .nack_error_code = nack_error_code,
                         .header = {
                                    .sequence = sequence,
-                                   .timestamp = timestamp,
+                                   .timestamp_us = timestamp_us,
                                    },
                     };
                     payload_out.payload_data.nack = nack;
@@ -177,9 +171,9 @@ void app_main(void) {
 
                 payload_out.packet_type = QLCP_PT_STATUS;
 
-                const uint32_t current_ts_offset = atomic_load(&app_ctx.ts_offset);
-                const uint32_t timestamp = current_ts_offset + (uint32_t)(esp_timer_get_time() / 1000);
-                const uint16_t sequence = atomic_fetch_add(&app_ctx.sequence, 1);
+                const uint64_t current_ts_offset = atomic_load(&app_ctx.ts_offset);
+                const uint64_t timestamp_us = current_ts_offset + esp_timer_get_time();
+                const uint8_t sequence = atomic_fetch_add(&app_ctx.sequence, 1);
 
                 const qlcp_status_packet status = {
                     .control_data = control_data,
@@ -187,7 +181,7 @@ void app_main(void) {
                     .device_status = QLCP_DS_ACTIVE,
                     .header = {
                                .sequence = sequence,
-                               .timestamp = timestamp,
+                               .timestamp_us = timestamp_us,
                                },
                 };
                 payload_out.payload_data.status = status;
@@ -205,16 +199,16 @@ void app_main(void) {
                 ESP_LOGI(TAG, "Sensor stream started");
                 payload_out.packet_type = QLCP_PT_ACK;
 
-                const uint32_t current_ts_offset = atomic_load(&app_ctx.ts_offset);
-                const uint32_t timestamp = current_ts_offset + (uint32_t)(esp_timer_get_time() / 1000);
-                const uint16_t sequence = atomic_fetch_add(&app_ctx.sequence, 1);
+                const uint64_t current_ts_offset = atomic_load(&app_ctx.ts_offset);
+                const uint64_t timestamp_us = current_ts_offset + esp_timer_get_time();
+                const uint8_t sequence = atomic_fetch_add(&app_ctx.sequence, 1);
 
                 const qlcp_ack_packet ack = {
                     .ack_packet_type = QLCP_PT_STREAM_START,
                     .ack_sequence = payload_in.payload_data.header_only.sequence,
                     .header = {
                                .sequence = sequence,
-                               .timestamp = timestamp,
+                               .timestamp_us = timestamp_us,
                                },
                 };
                 payload_out.payload_data.ack = ack;
@@ -225,16 +219,16 @@ void app_main(void) {
                 ESP_LOGI(TAG, "Sensor stream stopped");
                 payload_out.packet_type = QLCP_PT_ACK;
 
-                const uint32_t current_ts_offset = atomic_load(&app_ctx.ts_offset);
-                const uint32_t timestamp = current_ts_offset + (uint32_t)(esp_timer_get_time() / 1000);
-                const uint16_t sequence = atomic_fetch_add(&app_ctx.sequence, 1);
+                const uint64_t current_ts_offset = atomic_load(&app_ctx.ts_offset);
+                const uint64_t timestamp_us = current_ts_offset + esp_timer_get_time();
+                const uint8_t sequence = atomic_fetch_add(&app_ctx.sequence, 1);
 
                 const qlcp_ack_packet ack = {
                     .ack_packet_type = QLCP_PT_STREAM_STOP,
                     .ack_sequence = payload_in.payload_data.header_only.sequence,
                     .header = {
                                .sequence = sequence,
-                               .timestamp = timestamp,
+                               .timestamp_us = timestamp_us,
                                },
                 };
                 payload_out.payload_data.ack = ack;
@@ -250,16 +244,16 @@ void app_main(void) {
             case QLCP_PT_HEARTBEAT: {
                 payload_out.packet_type = QLCP_PT_ACK;
 
-                const uint32_t current_ts_offset = atomic_load(&app_ctx.ts_offset);
-                const uint32_t timestamp = current_ts_offset + (uint32_t)(esp_timer_get_time() / 1000);
-                const uint16_t sequence = atomic_fetch_add(&app_ctx.sequence, 1);
+                const uint64_t current_ts_offset = atomic_load(&app_ctx.ts_offset);
+                const uint64_t timestamp_us = current_ts_offset + esp_timer_get_time();
+                const uint8_t sequence = atomic_fetch_add(&app_ctx.sequence, 1);
 
                 const qlcp_ack_packet ack = {
                     .ack_packet_type = QLCP_PT_HEARTBEAT,
                     .ack_sequence = payload_in.payload_data.header_only.sequence,
                     .header = {
                                .sequence = sequence,
-                               .timestamp = timestamp,
+                               .timestamp_us = timestamp_us,
                                },
                 };
                 payload_out.payload_data.ack = ack;
@@ -273,9 +267,9 @@ void app_main(void) {
                 ESP_LOGE(TAG, "Invalid client packet type recieved: %d", payload_in.packet_type);
                 payload_out.packet_type = QLCP_PT_NACK;
 
-                const uint32_t current_ts_offset = atomic_load(&app_ctx.ts_offset);
-                const uint32_t timestamp = current_ts_offset + (uint32_t)(esp_timer_get_time() / 1000);
-                const uint16_t sequence = atomic_fetch_add(&app_ctx.sequence, 1);
+                const uint64_t current_ts_offset = atomic_load(&app_ctx.ts_offset);
+                const uint64_t timestamp_us = current_ts_offset + esp_timer_get_time();
+                const uint8_t sequence = atomic_fetch_add(&app_ctx.sequence, 1);
 
                 const qlcp_nack_packet nack = {
                     .nack_packet_type = payload_in.packet_type,
@@ -283,7 +277,7 @@ void app_main(void) {
                     .nack_error_code = QLCP_ERR_UNKNOWN_TYPE,
                     .header = {
                                .sequence = sequence,
-                               .timestamp = timestamp,
+                               .timestamp_us = timestamp_us,
                                },
                 };
                 payload_out.payload_data.nack = nack;
