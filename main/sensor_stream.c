@@ -140,10 +140,10 @@ void sensor_stream(void *pvParams) {
         // wait until all sensor reads are complete
         for (size_t i = 0; i < CONFIG_NUM_SENSORS; i++) {
             if (xSemaphoreTake(sensor_ctx[i].sensor_read_done_semaphore, pdMS_TO_TICKS(250)) == pdTRUE) {
-                data[i].sensor_id = i;
+                data[i].id = i;
                 data[i].value = sensor_ctx[i].value;
             } else {
-                data[i].sensor_id = i;
+                data[i].id = i;
                 data[i].value = FLT_MAX;
             }
         }
