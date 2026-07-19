@@ -17,6 +17,7 @@
 static const char *TAG = "PACKET HANDLER";
 
 // helpers
+
 static qlcp_ack_packet make_ack_packet(uint8_t ack_sequence, qlcp_packet_type ack_type, app_ctx_t *app_ctx) {
     const int64_t current_ts_offset = atomic_load(&app_ctx->ts_offset);
     const int64_t timestamp_us = esp_timer_get_time() - current_ts_offset;
@@ -89,7 +90,18 @@ static qlcp_status_packet make_status_packet(uint8_t ack_sequence, qlcp_packet_t
 }
 
 // packet handlers
-static esp_err_t timesync_resp_handler(app_ctx_t *app_ctx, qlcp_timesync_resp_packet *timesync_resp_packet, qlcp_server_payload *payload_out) {
+
+static void estop_handler(app_ctx_t *app_ctx, qlcp_header_only_packet *estop_packet, qlcp_server_payload *payload_out) {
+    for (size_t i = 0; i < CONFIG_NUM_CONTROLS; i++) {
+        control_set_default(&app_ctx->controls[i]);
+    }
+    ESP_LOGW(TAG, "Received ESTOP, reset to default state");
+
+    payload_out->packet_type = QLCP_PT_STATUS;
+    payload_out->payload_data.status = make_status_packet(estop_packet->header.sequence, QLCP_PT_ESTOP, app_ctx);
+}
+
+static void timesync_resp_handler(app_ctx_t *app_ctx, qlcp_timesync_resp_packet *timesync_resp_packet, qlcp_server_payload *payload_out) {
     const uint64_t t1 = timesync_resp_packet->t1_echo_us;
     const uint64_t t2 = timesync_resp_packet->t2_us;
     const uint64_t t3 = timesync_resp_packet->header.timestamp_us;
@@ -99,7 +111,6 @@ static esp_err_t timesync_resp_handler(app_ctx_t *app_ctx, qlcp_timesync_resp_pa
 
     payload_out->packet_type = QLCP_PT_ACK;
     payload_out->payload_data.ack = make_ack_packet(timesync_resp_packet->header.sequence, QLCP_PT_TIMESYNC_RESP, app_ctx);
-    return ESP_OK;
 }
 
 static void control_handler(app_ctx_t *app_ctx, qlcp_control_packet *control_packet, qlcp_server_payload *payload_out) {
@@ -108,6 +119,7 @@ static void control_handler(app_ctx_t *app_ctx, qlcp_control_packet *control_pac
     esp_err_t err = ESP_FAIL;
     qlcp_err_code nack_err = QLCP_ERR_HARDWARE_FAULT;
 
+    // ensure the control index is valid
     if (i < CONFIG_NUM_CONTROLS) {
         switch (control_packet->control_data.type) {
             case QLCP_CONTROL_BOOL:
@@ -140,7 +152,42 @@ static void control_handler(app_ctx_t *app_ctx, qlcp_control_packet *control_pac
 static void status_request_handler(app_ctx_t *app_ctx, qlcp_header_only_packet *status_request_packet, qlcp_server_payload *payload_out) {
     payload_out->packet_type = QLCP_PT_STATUS;
     payload_out->payload_data.status = make_status_packet(status_request_packet->header.sequence, QLCP_PT_STATUS_REQUEST, app_ctx);
-    
+}
+
+static void stream_start_handler(app_ctx_t *app_ctx, qlcp_stream_start_packet *stream_start_packet, qlcp_server_payload *payload_out) {
+    // give the stream task the frequency
+    xTaskNotify(
+        app_ctx->sensor_stream_handle,
+        stream_start_packet->stream_frequency,
+        eSetValueWithOverwrite
+    );
+    // notify the stream task to start
+    xEventGroupSetBits(app_ctx->sensor_stream_event_group_handle, SENSOR_STREAM_ENABLE_BIT);
+    ESP_LOGI(TAG, "Sensor stream started");
+
+    payload_out->packet_type = QLCP_PT_ACK;
+    payload_out->payload_data.ack = make_ack_packet(stream_start_packet->header.sequence, QLCP_PT_STREAM_START, app_ctx);
+}
+
+static void stream_stop_handler(app_ctx_t *app_ctx, qlcp_header_only_packet *stream_stop_packet, qlcp_server_payload *payload_out) {
+    xEventGroupClearBits(app_ctx->sensor_stream_event_group_handle, SENSOR_STREAM_ENABLE_BIT);
+    ESP_LOGI(TAG, "Sensor stream stopped");
+
+    payload_out->packet_type = QLCP_PT_ACK;
+    payload_out->payload_data.ack = make_ack_packet(stream_stop_packet->header.sequence, QLCP_PT_STREAM_STOP, app_ctx);
+}
+
+static void get_single_handler(app_ctx_t *app_ctx, qlcp_header_only_packet *get_single_packet, qlcp_server_payload *payload_out) {
+    xEventGroupSetBits(app_ctx->sensor_stream_event_group_handle, SENSORS_SINGLE_READING_BIT);
+    ESP_LOGI(TAG, "Sensors single reading");
+
+    payload_out->packet_type = QLCP_PT_ACK;
+    payload_out->payload_data.ack = make_ack_packet(get_single_packet->header.sequence, QLCP_PT_GET_SINGLE, app_ctx);
+}
+
+static void heartbeat_handler(app_ctx_t *app_ctx, qlcp_header_only_packet *heartbeat_packet, qlcp_server_payload *payload_out) {
+    payload_out->packet_type = QLCP_PT_ACK;
+    payload_out->payload_data.ack = make_ack_packet(heartbeat_packet->header.sequence, QLCP_PT_HEARTBEAT, app_ctx);
 }
 
 // handler loop
@@ -199,54 +246,29 @@ void packet_handler(void *pvParams) {
 
             switch (payload_in.packet_type) {
             case QLCP_PT_ESTOP:
-                for (size_t i = 0; i < CONFIG_NUM_CONTROLS; i++) {
-                    control_set_default(&app_ctx->controls[i]);
-                }
-                ESP_LOGW(TAG, "Received ESTOP, reset to default state");
-                continue;
-
+                estop_handler(app_ctx, &payload_in.payload_data.header_only, &payload_out);
+                break;
             case QLCP_PT_TIMESYNC_RESP: 
                 timesync_resp_handler(app_ctx, &payload_in.payload_data.timesync_resp, &payload_out);
                 break;
             case QLCP_PT_CONTROL:
                 control_handler(app_ctx, &payload_in.payload_data.control, &payload_out);
                 break;
-            case QLCP_PT_STATUS_REQUEST: {
+            case QLCP_PT_STATUS_REQUEST:
                 status_request_handler(app_ctx, &payload_in.payload_data.header_only, &payload_out);
-            } break;
-
-            case QLCP_PT_STREAM_START: {
-                // give the stream task the frequency
-                xTaskNotify(
-                    app_ctx->sensor_stream_handle,
-                    payload_in.payload_data.stream_start.stream_frequency,
-                    eSetValueWithOverwrite
-                );
-                // notify the stream task to start
-                xEventGroupSetBits(app_ctx->sensor_stream_event_group_handle, SENSOR_STREAM_ENABLE_BIT);
-                ESP_LOGI(TAG, "Sensor stream started");
-                payload_out.packet_type = QLCP_PT_ACK;
-                payload_out.payload_data.ack = make_ack_packet(payload_in.payload_data.stream_start.header.sequence, payload_in.packet_type, app_ctx);
-            } break;
-
+                break;
+            case QLCP_PT_STREAM_START:
+                stream_start_handler(app_ctx, &payload_in.payload_data.stream_start, &payload_out);
+                break;
             case QLCP_PT_STREAM_STOP:
-                xEventGroupClearBits(app_ctx->sensor_stream_event_group_handle, SENSOR_STREAM_ENABLE_BIT);
-                ESP_LOGI(TAG, "Sensor stream stopped");
-                payload_out.packet_type = QLCP_PT_ACK;
-                payload_out.payload_data.ack = make_ack_packet(payload_in.payload_data.header_only.header.sequence, payload_in.packet_type, app_ctx);
+                stream_stop_handler(app_ctx, &payload_in.payload_data.header_only, &payload_out);
                 break;
-
             case QLCP_PT_GET_SINGLE:
-                // notify the stream task to send single reading (does not respond here as sensor stream loop sends a data packet)
-                xEventGroupSetBits(app_ctx->sensor_stream_event_group_handle, SENSORS_SINGLE_READING_BIT);
-                ESP_LOGI(TAG, "Sensors single reading");
-                continue;
-
-            case QLCP_PT_HEARTBEAT:
-                payload_out.packet_type = QLCP_PT_ACK;
-                payload_out.payload_data.ack = make_ack_packet(payload_in.payload_data.header_only.header.sequence, payload_in.packet_type, app_ctx);
+                get_single_handler(app_ctx, &payload_in.payload_data.header_only, &payload_out);
                 break;
-
+            case QLCP_PT_HEARTBEAT:
+                heartbeat_handler(app_ctx, &payload_in.payload_data.header_only, &payload_out);
+                break;
             case QLCP_PT_ACK:
             case QLCP_PT_NACK:
                 continue;
