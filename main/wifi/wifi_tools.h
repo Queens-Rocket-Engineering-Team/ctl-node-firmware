@@ -31,7 +31,7 @@ typedef struct {
     uint16_t server_udp_port;
     int32_t server_tcp_sock;
     int32_t server_udp_sock;
-    int32_t ssdp_sock;
+    int32_t discovery_sock;
     QueueHandle_t tcp_recv_queue_handle;
     QueueHandle_t tcp_send_queue_handle;
     QueueHandle_t udp_send_queue_handle;
@@ -47,7 +47,7 @@ esp_err_t wifi_event_handler_register(network_ctx_t *network_ctx);
 
 esp_err_t network_manager_init(network_ctx_t *network_ctx);
 
-esp_err_t ssdp_discover_server(int32_t *sock, char server_ip[], size_t server_ip_len, esp_netif_t *netif_handle);
+esp_err_t discover_server(int32_t *sock, char server_ip[], size_t server_ip_len, esp_netif_t *netif_handle);
 esp_err_t tcp_connect_to_server(int32_t *sock, const char server_ip[], uint16_t server_port);
 esp_err_t udp_create_socket(int32_t *sock, const char server_ip[], uint16_t server_port);
 

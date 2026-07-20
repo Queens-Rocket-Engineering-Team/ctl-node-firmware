@@ -32,7 +32,7 @@ esp_err_t network_manager_init(network_ctx_t *network_ctx) {
 
     network_ctx->server_tcp_port = TCP_SERVER_PORT;
     network_ctx->server_udp_port = UDP_SERVER_PORT;
-    network_ctx->ssdp_sock = -1;
+    network_ctx->discovery_sock = -1;
     network_ctx->server_tcp_sock = -1;
     network_ctx->server_udp_sock = -1;
 
@@ -166,9 +166,9 @@ void network_state_manager(void *pvParams) {
             xEventGroupClearBits(network_ctx->wifi_event_group_handle, SERVER_CONNECTED_BIT);
             network_ctx->config_sent = false;
 
-            if (network_ctx->ssdp_sock != -1) {
-                close(network_ctx->ssdp_sock);
-                network_ctx->ssdp_sock = -1;
+            if (network_ctx->discovery_sock != -1) {
+                close(network_ctx->discovery_sock);
+                network_ctx->discovery_sock = -1;
             }
             if (network_ctx->server_tcp_sock != -1) {
                 shutdown(network_ctx->server_tcp_sock, 0);
@@ -183,8 +183,8 @@ void network_state_manager(void *pvParams) {
         }
         if (signal & SIG_WIFI_CONN || signal & SIG_SERVER_RETRY) {
             // look for server when wifi connects
-            err = ssdp_discover_server(
-                &network_ctx->ssdp_sock, network_ctx->server_ip, IPADDR_STRLEN_MAX, network_ctx->netif_handle
+            err = discover_server(
+                &network_ctx->discovery_sock, network_ctx->server_ip, IPADDR_STRLEN_MAX, network_ctx->netif_handle
             );
             if (err == ESP_OK) {
                 xTaskNotify(xTaskGetCurrentTaskHandle(), SIG_SSDP_GOT_SERVER, eSetBits);
