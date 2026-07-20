@@ -1,5 +1,5 @@
 idf_component_register(
-    SRCS "main.c" "setup.c" "packet_handler.c" "sensor_stream.c" "wifi/network_manager.c" "wifi/tcp_tools.c" "wifi/ssdp_tools.c" "wifi/udp_tools.c"
+    SRCS "main.c" "setup.c" "packet_handler.c" "sensor_stream.c" "wifi/network_manager.c" "wifi/tcp_tools.c" "wifi/discovery_tools.c" "wifi/udp_tools.c"
     INCLUDE_DIRS . ./wifi
     REQUIRES
     control
