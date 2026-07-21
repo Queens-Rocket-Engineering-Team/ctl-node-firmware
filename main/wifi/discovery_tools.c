@@ -91,14 +91,8 @@ esp_err_t discover_server(int32_t *sock, char server_ip[], size_t server_ip_len,
         }
 
         // check if received data matches server discovery request
-        size_t index = 0;
-        if (qlcp_find_magic_num(&index, buffer, len) != QLCP_OK) {
-            continue;
-        }
-
         qlcp_client_payload payload = {0};
-        const size_t remaining_len = len - index;
-        if (qlcp_decode_server_to_client(&payload, buffer + index, remaining_len) != QLCP_OK) {
+        if (qlcp_decode_server_to_client(&payload, buffer, len) != QLCP_OK) {
             continue;
         }
 
