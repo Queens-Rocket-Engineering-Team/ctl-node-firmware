@@ -6,6 +6,9 @@
 #include <netdb.h>
 #include <stdint.h>
 
+#define TCP_SERVER_PORT 50000
+#define UDP_SERVER_PORT 50001
+
 #define MESSAGE_QUEUE_TIMEOUT (pdMS_TO_TICKS(10))
 
 #define TCP_RECV_QUEUE_LEN 10
@@ -26,8 +29,6 @@ enum {
 typedef struct {
     esp_netif_t *netif_handle;
     char server_ip[IPADDR_STRLEN_MAX];
-    uint16_t server_tcp_port;
-    uint16_t server_udp_port;
     int32_t server_tcp_sock;
     int32_t server_udp_sock;
     int32_t discovery_sock;

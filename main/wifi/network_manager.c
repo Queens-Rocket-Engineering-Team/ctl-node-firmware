@@ -11,9 +11,6 @@
 #include "qlcp_lib.h"
 #include "wifi_tools.h"
 
-#define TCP_SERVER_PORT 50000
-#define UDP_SERVER_PORT 50001
-
 #define NET_MANAGER_STACK_SIZE 4096
 #define TCP_RECV_STACK_SIZE 4096
 #define TCP_SEND_STACK_SIZE 4096
@@ -30,8 +27,6 @@ esp_err_t network_manager_init(network_ctx_t *network_ctx) {
         return ESP_ERR_INVALID_ARG;
     }
 
-    network_ctx->server_tcp_port = TCP_SERVER_PORT;
-    network_ctx->server_udp_port = UDP_SERVER_PORT;
     network_ctx->discovery_sock = -1;
     network_ctx->server_tcp_sock = -1;
     network_ctx->server_udp_sock = -1;
@@ -193,9 +188,7 @@ void network_state_manager(void *pvParams) {
         }
         if (signal & SIG_SSDP_GOT_SERVER) {
             // attempt to connect to server when ip found
-            err = tcp_connect_to_server(
-                &network_ctx->server_tcp_sock, network_ctx->server_ip, network_ctx->server_tcp_port
-            );
+            err = tcp_connect_to_server(&network_ctx->server_tcp_sock, network_ctx->server_ip, TCP_SERVER_PORT);
             if (err == ESP_OK) {
                 xTaskNotify(xTaskGetCurrentTaskHandle(), SIG_TCP_CONN_SERVER, eSetBits);
             } else {
@@ -204,7 +197,7 @@ void network_state_manager(void *pvParams) {
         }
         if (signal & SIG_TCP_CONN_SERVER) {
             // create the udp socket for sending data packets
-            udp_create_socket(&network_ctx->server_udp_sock, network_ctx->server_ip, network_ctx->server_udp_port);
+            udp_create_socket(&network_ctx->server_udp_sock, network_ctx->server_ip, UDP_SERVER_PORT);
             // enable the recv/send tasks when connected to server
             xEventGroupSetBits(network_ctx->wifi_event_group_handle, SERVER_CONNECTED_BIT);
         }
