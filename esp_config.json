@@ -2,7 +2,7 @@
     "device_name": "PANDA-V3",
     "device_type": "Sensor Monitor",
 
-    "sensor_info": {
+    "sensors": {
         "pressure_transducer": {
             "PT101": {
                 "sensor_index": "PT1",
