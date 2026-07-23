@@ -12,10 +12,14 @@
 #include "control.h"
 
 #define WATCHDOG_RESET_TIMEOUT_MIN 5
-#define WATCHDOG_RESET_TIMEOUT_US (WATCHDOG_RESET_TIMEOUT_MIN * 60 * 1000000ULL)
+#define WATCHDOG_RESET_TIMEOUT_US ((WATCHDOG_RESET_TIMEOUT_MIN) * 60 * 1000000ULL)
 
 #define TIMESYNC_REQ_PERIOD_S 60
-#define TIMESYNC_REQ_PERIOD_US (TIMESYNC_REQ_PERIOD_S * 1000000ULL)
+#define TIMESYNC_REQ_PERIOD_US ((TIMESYNC_REQ_PERIOD_S) * 1000000ULL)
+
+#define STATUS_RING_BUFFER_LEN ((TCP_SEND_QUEUE_LEN) + 2)
+// +2 to account for packet taken out of queue by
+// udp_send + extra packet to write to when queue is full
 
 static const char *TAG = "PACKET HANDLER";
 
@@ -41,7 +45,7 @@ static void s_timesync_req_callback(void *ctx) {
         .payload_data.header_only = timesync_req,
     };
 
-    xQueueSend(app_ctx->network_ctx->tcp_send_queue_handle, (void *)&payload_out, MESSAGE_QUEUE_TIMEOUT);
+    xQueueSend(app_ctx->network_ctx->tcp_send_queue_handle, (void *)&payload_out, 0);
 }
 
 // helpers
@@ -79,9 +83,13 @@ static qlcp_nack_packet s_make_nack_packet(uint8_t nack_sequence, qlcp_packet_ty
     return nack;
 }
 
-
 static qlcp_status_packet s_make_status_packet(uint8_t ack_sequence, qlcp_packet_type ack_type, app_ctx_t *app_ctx) {
-    static qlcp_control_data control_data[CONFIG_NUM_CONTROLS] = {0};
+    static uint8_t ring_buffer_idx = 0;
+    static qlcp_control_data control_data_ring_buffer[STATUS_RING_BUFFER_LEN][CONFIG_NUM_CONTROLS] = {0};
+
+    qlcp_control_data *control_data = control_data_ring_buffer[ring_buffer_idx];
+
+    ring_buffer_idx = (ring_buffer_idx + 1) % STATUS_RING_BUFFER_LEN;
 
     // right now this only handles bool controls, needs to be fixed
     for (size_t i = 0; i < CONFIG_NUM_CONTROLS; i++) {
@@ -251,7 +259,9 @@ void packet_handler(void *pvParams) {
                 ESP_LOGI(TAG, "Sensor stream stopped");
             }
             // stop timesync req timer if disconnected
-            esp_timer_stop(timesync_req_timer);
+            if (esp_timer_is_active(timesync_req_timer)) {
+                esp_timer_stop(timesync_req_timer);
+            }
         }
 
         // send config on connection
@@ -271,12 +281,15 @@ void packet_handler(void *pvParams) {
             };
             payload_out.payload_data.config = config;
 
-            xQueueSend(app_ctx->network_ctx->tcp_send_queue_handle, (void *)&payload_out, 0);
-            app_ctx->config_sent = true;
-            ESP_LOGI(TAG, "Sent config to server");
+            if (xQueueSend(app_ctx->network_ctx->tcp_send_queue_handle, (void *)&payload_out, 0) == pdTRUE) {
+                app_ctx->config_sent = true;
+                ESP_LOGI(TAG, "Sent config to server");
+                // start timesync req loop
+                esp_timer_start_periodic(timesync_req_timer, TIMESYNC_REQ_PERIOD_US);
+            } else {
+                ESP_LOGW(TAG, "Failed to send config to TCP queue");
+            }
 
-            // start timesync req loop
-            esp_timer_start_periodic(timesync_req_timer, TIMESYNC_REQ_PERIOD_US);
         }
         // reset all controls to default state when watchdog timeout triggers
         if (esp_timer_get_time() - last_packet_time_us > WATCHDOG_RESET_TIMEOUT_US) {
