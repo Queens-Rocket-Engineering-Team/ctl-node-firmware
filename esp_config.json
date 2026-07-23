@@ -68,37 +68,37 @@
             "AV201": {
                 "control_index": "AV_FILL",
                 "default_state": "CLOSED",
-                "type": "QLCP_CONTROL_BOOL",
+                "type": "BOOL",
                 "unit": "unitless"
             },
             "AV205": {
                 "control_index": "AV_RUN",
                 "default_state": "CLOSED",
-                "type": "QLCP_CONTROL_BOOL",
+                "type": "BOOL",
                 "unit": "unitless"
             },
             "AV204": {
                 "control_index": "AV3",
                 "default_state": "OPEN",
-                "type": "QLCP_CONTROL_BOOL",
+                "type": "BOOL",
                 "unit": "unitless"
             },
             "AV203": {
                 "control_index": "AV4",
                 "default_state": "CLOSED",
-                "type": "QLCP_CONTROL_BOOL",
+                "type": "BOOL",
                 "unit": "unitless"
             },
             "AV101": {
                 "control_index": "AV5",
                 "default_state": "OPEN",
-                "type": "QLCP_CONTROL_BOOL",
+                "type": "BOOL",
                 "unit": "unitless"
             },
             "AV202": {
                 "control_index": "AV6",
                 "default_state": "OPEN",
-                "type": "QLCP_CONTROL_BOOL",
+                "type": "BOOL",
                 "unit": "unitless"
             }
         },
@@ -106,19 +106,19 @@
             "Safe24": {
                 "control_index": "SAFE_24V_CTL",
                 "default_state": "OPEN",
-                "type": "QLCP_CONTROL_BOOL",
+                "type": "BOOL",
                 "unit": "unitless"
             },
             "IgnPrime": {
                 "control_index": "IGNITOR_PRIME_CTL",
                 "default_state": "OPEN",
-                "type": "QLCP_CONTROL_BOOL",
+                "type": "BOOL",
                 "unit": "unitless"
             },
             "IgnRun": {
                 "control_index": "IGNITOR_RUN_CTL",
                 "default_state": "OPEN",
-                "type": "QLCP_CONTROL_BOOL",
+                "type": "BOOL",
                 "unit": "unitless"
             }
         }
