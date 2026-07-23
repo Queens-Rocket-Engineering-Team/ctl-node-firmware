@@ -85,14 +85,6 @@ except Exception as e:
 sensor_templates, _ = read_json(f'{script_dir}/sensor_templates.json')
 control_templates, _ = read_json(f'{script_dir}/control_templates.json')
 
-# json name to c enum for controls
-control_fields = {
-    'default_state': {
-        'open': 'CONTROL_OPEN',
-        'closed': 'CONTROL_CLOSED',
-    },
-}
-
 def generate_adc_init(adc_cfg: dict, index: int) -> str:
 
     adc_addr = adc_cfg['addr']
