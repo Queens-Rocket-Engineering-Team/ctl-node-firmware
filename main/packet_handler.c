@@ -175,7 +175,7 @@ static void s_control_handler(app_ctx_t *app_ctx, qlcp_control_packet *control_p
         }
     }
 
-    ESP_ERROR_CHECK_WITHOUT_ABORT(err);
+    ESP_LOGE(TAG, "%s", esp_err_to_name(err));
     if (err == ESP_OK) {
         payload_out->packet_type = QLCP_PT_STATUS;
         payload_out->payload_data.status = s_make_status_packet(control_packet->header.sequence, QLCP_PT_CONTROL, app_ctx);
