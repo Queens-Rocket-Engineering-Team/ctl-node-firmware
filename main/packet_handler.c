@@ -14,11 +14,39 @@
 #define WATCHDOG_RESET_TIMEOUT_MIN 5
 #define WATCHDOG_RESET_TIMEOUT_US (WATCHDOG_RESET_TIMEOUT_MIN * 60 * 1000000ULL)
 
+#define TIMESYNC_REQ_PERIOD_S 60
+#define TIMESYNC_REQ_PERIOD_US (TIMESYNC_REQ_PERIOD_S * 1000000ULL)
+
 static const char *TAG = "PACKET HANDLER";
+
+// timesync req
+
+static void s_timesync_req_callback(void *ctx) {
+    app_ctx_t *app_ctx = (app_ctx_t *) ctx;
+
+    const int64_t current_ts_offset = atomic_load(&app_ctx->ts_offset);
+    const int64_t timestamp_us = esp_timer_get_time() - current_ts_offset;
+    const uint8_t sequence = atomic_fetch_add(&app_ctx->sequence, 1);
+
+    const qlcp_header_only_packet timesync_req = {
+        .packet_type = QLCP_PT_TIMESYNC_REQ,
+        .header = {
+                   .sequence = sequence,
+                   .timestamp_us = timestamp_us,
+                   },
+    };
+
+    const qlcp_server_payload payload_out = {
+        .packet_type = QLCP_PT_TIMESYNC_REQ,
+        .payload_data.header_only = timesync_req,
+    };
+
+    xQueueSend(app_ctx->network_ctx->tcp_send_queue_handle, (void *)&payload_out, MESSAGE_QUEUE_TIMEOUT);
+}
 
 // helpers
 
-static qlcp_ack_packet make_ack_packet(uint8_t ack_sequence, qlcp_packet_type ack_type, app_ctx_t *app_ctx) {
+static qlcp_ack_packet s_make_ack_packet(uint8_t ack_sequence, qlcp_packet_type ack_type, app_ctx_t *app_ctx) {
     const int64_t current_ts_offset = atomic_load(&app_ctx->ts_offset);
     const int64_t timestamp_us = esp_timer_get_time() - current_ts_offset;
     const uint8_t sequence = atomic_fetch_add(&app_ctx->sequence, 1);
@@ -34,7 +62,7 @@ static qlcp_ack_packet make_ack_packet(uint8_t ack_sequence, qlcp_packet_type ac
     return ack;
 }
 
-static qlcp_nack_packet make_nack_packet(uint8_t nack_sequence, qlcp_packet_type nack_type, qlcp_err_code nack_err, app_ctx_t *app_ctx) {
+static qlcp_nack_packet s_make_nack_packet(uint8_t nack_sequence, qlcp_packet_type nack_type, qlcp_err_code nack_err, app_ctx_t *app_ctx) {
     const int64_t current_ts_offset = atomic_load(&app_ctx->ts_offset);
     const int64_t timestamp_us = esp_timer_get_time() - current_ts_offset;
     const uint8_t sequence = atomic_fetch_add(&app_ctx->sequence, 1);
@@ -52,7 +80,7 @@ static qlcp_nack_packet make_nack_packet(uint8_t nack_sequence, qlcp_packet_type
 }
 
 
-static qlcp_status_packet make_status_packet(uint8_t ack_sequence, qlcp_packet_type ack_type, app_ctx_t *app_ctx) {
+static qlcp_status_packet s_make_status_packet(uint8_t ack_sequence, qlcp_packet_type ack_type, app_ctx_t *app_ctx) {
     static qlcp_control_data control_data[CONFIG_NUM_CONTROLS] = {0};
 
     // right now this only handles bool controls, needs to be fixed
@@ -91,17 +119,17 @@ static qlcp_status_packet make_status_packet(uint8_t ack_sequence, qlcp_packet_t
 
 // packet handlers
 
-static void estop_handler(app_ctx_t *app_ctx, qlcp_header_only_packet *estop_packet, qlcp_server_payload *payload_out) {
+static void s_estop_handler(app_ctx_t *app_ctx, qlcp_header_only_packet *estop_packet, qlcp_server_payload *payload_out) {
     for (size_t i = 0; i < CONFIG_NUM_CONTROLS; i++) {
         control_set_default(&app_ctx->controls[i]);
     }
     ESP_LOGW(TAG, "Received ESTOP, reset to default state");
 
     payload_out->packet_type = QLCP_PT_STATUS;
-    payload_out->payload_data.status = make_status_packet(estop_packet->header.sequence, QLCP_PT_ESTOP, app_ctx);
+    payload_out->payload_data.status = s_make_status_packet(estop_packet->header.sequence, QLCP_PT_ESTOP, app_ctx);
 }
 
-static void timesync_resp_handler(app_ctx_t *app_ctx, qlcp_timesync_resp_packet *timesync_resp_packet, qlcp_server_payload *payload_out) {
+static void s_timesync_resp_handler(app_ctx_t *app_ctx, qlcp_timesync_resp_packet *timesync_resp_packet, qlcp_server_payload *payload_out) {
     const uint64_t t1 = timesync_resp_packet->t1_echo_us;
     const uint64_t t2 = timesync_resp_packet->t2_us;
     const uint64_t t3 = timesync_resp_packet->header.timestamp_us;
@@ -110,10 +138,10 @@ static void timesync_resp_handler(app_ctx_t *app_ctx, qlcp_timesync_resp_packet 
     atomic_store(&app_ctx->ts_offset, new_ts_offset);
 
     payload_out->packet_type = QLCP_PT_ACK;
-    payload_out->payload_data.ack = make_ack_packet(timesync_resp_packet->header.sequence, QLCP_PT_TIMESYNC_RESP, app_ctx);
+    payload_out->payload_data.ack = s_make_ack_packet(timesync_resp_packet->header.sequence, QLCP_PT_TIMESYNC_RESP, app_ctx);
 }
 
-static void control_handler(app_ctx_t *app_ctx, qlcp_control_packet *control_packet, qlcp_server_payload *payload_out) {
+static void s_control_handler(app_ctx_t *app_ctx, qlcp_control_packet *control_packet, qlcp_server_payload *payload_out) {
     const uint8_t i = control_packet->control_data.id;
 
     esp_err_t err = ESP_FAIL;
@@ -142,19 +170,19 @@ static void control_handler(app_ctx_t *app_ctx, qlcp_control_packet *control_pac
     ESP_ERROR_CHECK_WITHOUT_ABORT(err);
     if (err == ESP_OK) {
         payload_out->packet_type = QLCP_PT_STATUS;
-        payload_out->payload_data.status = make_status_packet(control_packet->header.sequence, QLCP_PT_CONTROL, app_ctx);
+        payload_out->payload_data.status = s_make_status_packet(control_packet->header.sequence, QLCP_PT_CONTROL, app_ctx);
     } else {
         payload_out->packet_type = QLCP_PT_NACK;
-        payload_out->payload_data.nack = make_nack_packet(control_packet->header.sequence, QLCP_PT_CONTROL, nack_err, app_ctx);
+        payload_out->payload_data.nack = s_make_nack_packet(control_packet->header.sequence, QLCP_PT_CONTROL, nack_err, app_ctx);
     }
 }
 
-static void status_request_handler(app_ctx_t *app_ctx, qlcp_header_only_packet *status_request_packet, qlcp_server_payload *payload_out) {
+static void s_status_request_handler(app_ctx_t *app_ctx, qlcp_header_only_packet *status_request_packet, qlcp_server_payload *payload_out) {
     payload_out->packet_type = QLCP_PT_STATUS;
-    payload_out->payload_data.status = make_status_packet(status_request_packet->header.sequence, QLCP_PT_STATUS_REQUEST, app_ctx);
+    payload_out->payload_data.status = s_make_status_packet(status_request_packet->header.sequence, QLCP_PT_STATUS_REQUEST, app_ctx);
 }
 
-static void stream_start_handler(app_ctx_t *app_ctx, qlcp_stream_start_packet *stream_start_packet, qlcp_server_payload *payload_out) {
+static void s_stream_start_handler(app_ctx_t *app_ctx, qlcp_stream_start_packet *stream_start_packet, qlcp_server_payload *payload_out) {
     // give the stream task the frequency
     xTaskNotify(
         app_ctx->sensor_stream_handle,
@@ -166,28 +194,28 @@ static void stream_start_handler(app_ctx_t *app_ctx, qlcp_stream_start_packet *s
     ESP_LOGI(TAG, "Sensor stream started");
 
     payload_out->packet_type = QLCP_PT_ACK;
-    payload_out->payload_data.ack = make_ack_packet(stream_start_packet->header.sequence, QLCP_PT_STREAM_START, app_ctx);
+    payload_out->payload_data.ack = s_make_ack_packet(stream_start_packet->header.sequence, QLCP_PT_STREAM_START, app_ctx);
 }
 
-static void stream_stop_handler(app_ctx_t *app_ctx, qlcp_header_only_packet *stream_stop_packet, qlcp_server_payload *payload_out) {
+static void s_stream_stop_handler(app_ctx_t *app_ctx, qlcp_header_only_packet *stream_stop_packet, qlcp_server_payload *payload_out) {
     xEventGroupClearBits(app_ctx->sensor_stream_event_group_handle, SENSOR_STREAM_ENABLE_BIT);
     ESP_LOGI(TAG, "Sensor stream stopped");
 
     payload_out->packet_type = QLCP_PT_ACK;
-    payload_out->payload_data.ack = make_ack_packet(stream_stop_packet->header.sequence, QLCP_PT_STREAM_STOP, app_ctx);
+    payload_out->payload_data.ack = s_make_ack_packet(stream_stop_packet->header.sequence, QLCP_PT_STREAM_STOP, app_ctx);
 }
 
-static void get_single_handler(app_ctx_t *app_ctx, qlcp_header_only_packet *get_single_packet, qlcp_server_payload *payload_out) {
+static void s_get_single_handler(app_ctx_t *app_ctx, qlcp_header_only_packet *get_single_packet, qlcp_server_payload *payload_out) {
     xEventGroupSetBits(app_ctx->sensor_stream_event_group_handle, SENSORS_SINGLE_READING_BIT);
     ESP_LOGI(TAG, "Sensors single reading");
 
     payload_out->packet_type = QLCP_PT_ACK;
-    payload_out->payload_data.ack = make_ack_packet(get_single_packet->header.sequence, QLCP_PT_GET_SINGLE, app_ctx);
+    payload_out->payload_data.ack = s_make_ack_packet(get_single_packet->header.sequence, QLCP_PT_GET_SINGLE, app_ctx);
 }
 
-static void heartbeat_handler(app_ctx_t *app_ctx, qlcp_header_only_packet *heartbeat_packet, qlcp_server_payload *payload_out) {
+static void s_heartbeat_handler(app_ctx_t *app_ctx, qlcp_header_only_packet *heartbeat_packet, qlcp_server_payload *payload_out) {
     payload_out->packet_type = QLCP_PT_ACK;
-    payload_out->payload_data.ack = make_ack_packet(heartbeat_packet->header.sequence, QLCP_PT_HEARTBEAT, app_ctx);
+    payload_out->payload_data.ack = s_make_ack_packet(heartbeat_packet->header.sequence, QLCP_PT_HEARTBEAT, app_ctx);
 }
 
 // handler loop
@@ -200,16 +228,30 @@ void packet_handler(void *pvParams) {
     qlcp_client_payload payload_in = {0};
     qlcp_server_payload payload_out = {0};
 
+    // create the timer for timesync reqs
+    const esp_timer_create_args_t timesync_req_timer_args = {
+        .callback = &s_timesync_req_callback,
+        .arg = app_ctx,
+        .name = "timesync timer",
+    };
+    esp_timer_handle_t timesync_req_timer = {0};
+    esp_timer_create(&timesync_req_timer_args, &timesync_req_timer);
+
     while (1) {
 
         EventBits_t wifi_bits = xEventGroupGetBits(app_ctx->network_ctx->wifi_event_group_handle);
         EventBits_t stream_bits = xEventGroupGetBits(app_ctx->sensor_stream_event_group_handle);
 
-        // disable data stream if disconnected
-        if ((stream_bits & SENSOR_STREAM_ENABLE_BIT) && !(wifi_bits & SERVER_CONNECTED_BIT)) {
-            xEventGroupClearBits(app_ctx->sensor_stream_event_group_handle, SENSOR_STREAM_ENABLE_BIT);
-            ESP_LOGI(TAG, "Sensor stream stopped");
+        if (!(wifi_bits & SERVER_CONNECTED_BIT)) {
+            // disable data stream if disconnected
+            if (stream_bits & SENSOR_STREAM_ENABLE_BIT) {
+                xEventGroupClearBits(app_ctx->sensor_stream_event_group_handle, SENSOR_STREAM_ENABLE_BIT);
+                ESP_LOGI(TAG, "Sensor stream stopped");
+            }
+            // stop timesync req timer if disconnected
+            esp_timer_stop(timesync_req_timer);
         }
+
         // send config on connection
         if (!app_ctx->network_ctx->config_sent && (wifi_bits & SERVER_CONNECTED_BIT)) {
             last_packet_time_us = esp_timer_get_time();
@@ -230,6 +272,9 @@ void packet_handler(void *pvParams) {
             xQueueSend(app_ctx->network_ctx->tcp_send_queue_handle, (void *)&payload_out, 0);
             app_ctx->network_ctx->config_sent = true;
             ESP_LOGI(TAG, "Sent config to server");
+
+            // start timesync req loop
+            esp_timer_start_periodic(timesync_req_timer, TIMESYNC_REQ_PERIOD_US);
         }
         // reset all controls to default state when watchdog timeout triggers
         if (esp_timer_get_time() - last_packet_time_us > WATCHDOG_RESET_TIMEOUT_US) {
@@ -246,28 +291,28 @@ void packet_handler(void *pvParams) {
 
             switch (payload_in.packet_type) {
             case QLCP_PT_ESTOP:
-                estop_handler(app_ctx, &payload_in.payload_data.header_only, &payload_out);
+                s_estop_handler(app_ctx, &payload_in.payload_data.header_only, &payload_out);
                 break;
             case QLCP_PT_TIMESYNC_RESP: 
-                timesync_resp_handler(app_ctx, &payload_in.payload_data.timesync_resp, &payload_out);
+                s_timesync_resp_handler(app_ctx, &payload_in.payload_data.timesync_resp, &payload_out);
                 break;
             case QLCP_PT_CONTROL:
-                control_handler(app_ctx, &payload_in.payload_data.control, &payload_out);
+                s_control_handler(app_ctx, &payload_in.payload_data.control, &payload_out);
                 break;
             case QLCP_PT_STATUS_REQUEST:
-                status_request_handler(app_ctx, &payload_in.payload_data.header_only, &payload_out);
+                s_status_request_handler(app_ctx, &payload_in.payload_data.header_only, &payload_out);
                 break;
             case QLCP_PT_STREAM_START:
-                stream_start_handler(app_ctx, &payload_in.payload_data.stream_start, &payload_out);
+                s_stream_start_handler(app_ctx, &payload_in.payload_data.stream_start, &payload_out);
                 break;
             case QLCP_PT_STREAM_STOP:
-                stream_stop_handler(app_ctx, &payload_in.payload_data.header_only, &payload_out);
+                s_stream_stop_handler(app_ctx, &payload_in.payload_data.header_only, &payload_out);
                 break;
             case QLCP_PT_GET_SINGLE:
-                get_single_handler(app_ctx, &payload_in.payload_data.header_only, &payload_out);
+                s_get_single_handler(app_ctx, &payload_in.payload_data.header_only, &payload_out);
                 break;
             case QLCP_PT_HEARTBEAT:
-                heartbeat_handler(app_ctx, &payload_in.payload_data.header_only, &payload_out);
+                s_heartbeat_handler(app_ctx, &payload_in.payload_data.header_only, &payload_out);
                 break;
             case QLCP_PT_ACK:
             case QLCP_PT_NACK:
@@ -275,7 +320,7 @@ void packet_handler(void *pvParams) {
             default:
                 ESP_LOGE(TAG, "Invalid client packet type recieved: %d", payload_in.packet_type);
                 payload_out.packet_type = QLCP_PT_NACK;
-                payload_out.payload_data.nack = make_nack_packet(payload_in.payload_data.header_only.header.sequence, payload_in.packet_type, QLCP_ERR_UNKNOWN_TYPE, app_ctx);
+                payload_out.payload_data.nack = s_make_nack_packet(payload_in.payload_data.header_only.header.sequence, payload_in.packet_type, QLCP_ERR_UNKNOWN_TYPE, app_ctx);
                 break;
             }
             // send the packet out to the tcp send queue

@@ -96,9 +96,9 @@ void sensor_stream(void *pvParams) {
     const esp_timer_create_args_t stream_timer_args = {
         .callback = &s_stream_timer_callback,
         .arg = &stream_timer_semaphore,
-        .name = "stream timer"
+        .name = "stream timer",
     };
-    esp_timer_handle_t stream_timer;
+    esp_timer_handle_t stream_timer = {0};
     esp_timer_create(&stream_timer_args, &stream_timer);
     esp_timer_start_periodic(stream_timer, period_us);
 
