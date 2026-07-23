@@ -299,6 +299,7 @@ void packet_handler(void *pvParams) {
             }
             ESP_LOGW(TAG, "Software watchdog triggered, reset to default state");
             last_packet_time_us = esp_timer_get_time();
+            app_ctx->config_sent = false;
         }
         // check for incoming packets from the tcp recv queue
         if (xQueueReceive(app_ctx->network_ctx->tcp_recv_queue_handle, &payload_in, pdMS_TO_TICKS(100)) == pdTRUE) {
