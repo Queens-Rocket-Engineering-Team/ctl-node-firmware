@@ -28,7 +28,7 @@ mapping, _ = read_json(args.mapping)
 
 num_adcs = len(mapping['ADC_map'])
 num_sensors = sum(len(sensor_group) for sensor_group in config['sensors'].values())
-num_controls = len(config['controls'])
+num_controls = sum(len(control_group) for control_group in config['controls'].values())
 
 sda_pin = mapping['i2c_bus']['sda_pin']
 scl_pin = mapping['i2c_bus']['scl_pin']
