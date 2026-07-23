@@ -27,7 +27,7 @@ mapping, _ = read_json(args.mapping)
 # .h file generation
 
 num_adcs = len(mapping['ADC_map'])
-num_sensors = sum(len(sensor_group) for sensor_group in config['sensor_info'].values())
+num_sensors = sum(len(sensor_group) for sensor_group in config['sensors'].values())
 num_controls = len(config['controls'])
 
 sda_pin = mapping['i2c_bus']['sda_pin']
@@ -194,7 +194,7 @@ adcs_init_code = '\n'.join(adcs_init_code)
 
 sensors_init_code = []
 sensors_initialized = 0
-for sensor_type, sensors in config['sensor_info'].items():
+for sensor_type, sensors in config['sensors'].items():
     for sensor_cfg in sensors.values():
         sensors_init_code.append(generate_sensor_init(sensor_cfg, sensor_type, mapping, sensors_initialized))
         sensors_initialized += 1
