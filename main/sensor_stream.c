@@ -149,8 +149,8 @@ void sensor_stream(void *pvParams) {
         }
 
         // create data packet
-        const uint64_t current_ts_offset = atomic_load(&app_ctx->ts_offset);
-        const uint64_t timestamp_us = current_ts_offset + esp_timer_get_time();
+        const int64_t current_ts_offset = atomic_load(&app_ctx->ts_offset);
+        const int64_t timestamp_us = esp_timer_get_time() - current_ts_offset;
         const uint8_t sequence = atomic_fetch_add(&app_ctx->sequence, 1);
 
         qlcp_data_packet data_packet = {
