@@ -174,6 +174,9 @@ void tcp_client_send(void *pvParams) {
 
         // convert packet struct to bytes depending on type
         switch (payload.packet_type) {
+        case QLCP_PT_TIMESYNC_REQ:
+            ret = qlcp_encode_header_only(tx_buffer, &packet_len, &payload.payload_data.header_only);
+            break;
         case QLCP_PT_CONFIG:
             ret = qlcp_encode_config(tx_buffer, &packet_len, &payload.payload_data.config);
             break;
