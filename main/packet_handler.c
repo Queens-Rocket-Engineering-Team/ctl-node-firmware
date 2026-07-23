@@ -284,8 +284,6 @@ void packet_handler(void *pvParams) {
             if (xQueueSend(app_ctx->network_ctx->tcp_send_queue_handle, (void *)&payload_out, 0) == pdTRUE) {
                 app_ctx->config_sent = true;
                 ESP_LOGI(TAG, "Sent config to server");
-                // start timesync req loop
-                esp_timer_start_periodic(timesync_req_timer, TIMESYNC_REQ_PERIOD_US);
             } else {
                 ESP_LOGW(TAG, "Failed to send config to TCP queue");
             }
@@ -330,6 +328,11 @@ void packet_handler(void *pvParams) {
                 s_heartbeat_handler(app_ctx, &payload_in.payload_data.header_only, &payload_out);
                 break;
             case QLCP_PT_ACK:
+                if (payload_in.payload_data.ack.ack_packet_type == QLCP_PT_CONFIG && !esp_timer_is_active(timesync_req_timer)) {
+                    // start timesync req loop on config ack
+                    esp_timer_start_periodic(timesync_req_timer, TIMESYNC_REQ_PERIOD_US);
+                }
+                continue;
             case QLCP_PT_NACK:
                 continue;
             default:
