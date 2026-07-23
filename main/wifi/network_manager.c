@@ -164,7 +164,6 @@ void network_state_manager(void *pvParams) {
         if (signal & SIG_WIFI_DISCONN || signal & SIG_SERVER_DISCONN) {
             // reset state manager if wifi disconnects
             xEventGroupClearBits(network_ctx->wifi_event_group_handle, SERVER_CONNECTED_BIT);
-            network_ctx->config_sent = false;
 
             if (network_ctx->discovery_sock != -1) {
                 close(network_ctx->discovery_sock);

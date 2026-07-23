@@ -5,7 +5,6 @@
 #include <freertos/FreeRTOS.h>
 #include <netdb.h>
 #include <stdint.h>
-#include <stdbool.h>
 
 #define MESSAGE_QUEUE_TIMEOUT (pdMS_TO_TICKS(10))
 
@@ -40,7 +39,6 @@ typedef struct {
     TaskHandle_t tcp_recv_handle;
     TaskHandle_t tcp_send_handle;
     TaskHandle_t udp_send_handle;
-    bool config_sent;
 } network_ctx_t;
 
 esp_err_t wifi_event_handler_register(network_ctx_t *network_ctx);
