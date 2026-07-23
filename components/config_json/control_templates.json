@@ -1,0 +1,26 @@
+{
+    "solenoid": {
+        "cfg_struct_name": "control_config_t",
+        "init_func": "control_init",
+        "cfg_struct_fields": {
+            "gpio_num": "pin",
+            "default_state": "default_state"
+        },
+        "default_state": {
+            "open": "CONTROL_OPEN",
+            "closed": "CONTROL_CLOSED"
+        }
+    },
+    "relay": {
+        "cfg_struct_name": "control_config_t",
+        "init_func": "control_init",
+        "cfg_struct_fields": {
+            "gpio_num": "pin",
+            "default_state": "default_state"
+        },
+        "default_state": {
+            "open": "CONTROL_OPEN",
+            "closed": "CONTROL_CLOSED"
+        }
+    }
+}

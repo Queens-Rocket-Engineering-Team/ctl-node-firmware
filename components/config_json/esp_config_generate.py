@@ -1,5 +1,7 @@
 import argparse
 import json
+from pathlib import Path
+script_dir = Path(__file__).resolve().parent
 
 def read_json(file_path: str) -> tuple[dict, str]:
     try:
@@ -80,79 +82,9 @@ except Exception as e:
 # .c file generation
 
 # template for mapping between values in the json config and corresponding c sensor config structs
-sensor_templates = {
-    'thermocouple': {
-        'cfg_struct_name': 'thermocouple_config_t',
-        'init_func': 'thermocouple_init',
-        'cfg_struct_fields': {
-            'p_pin': 'p_pin',
-            'n_pin': 'n_pin',
-            'unit': 'unit',
-        },
-        'unit': {
-            'c': 'SENSOR_UNIT_C',
-            'k': 'SENSOR_UNIT_K',
-            'f': 'SENSOR_UNIT_F',
-        },
-    },
-    'pressure_transducer': {
-        'cfg_struct_name': 'pressure_transducer_config_t',
-        'init_func': 'pressure_transducer_init',
-        'cfg_struct_fields': {
-            'pin': 'pin',
-            'resistor_ohms': 'resistor_ohms',
-            'max_pressure_psi': 'max_pressure_PSI',
-            'unit': 'unit',
-        },
-        'unit': {
-            'psi': 'SENSOR_UNIT_PSI',
-            'bar': 'SENSOR_UNIT_BAR',
-            'pa': 'SENSOR_UNIT_PA',
-        },
-    },
-    'load_cell': {
-        'cfg_struct_name': 'load_cell_config_t',
-        'init_func': 'load_cell_init',
-        'cfg_struct_fields': {
-            'p_pin': 'p_pin',
-            'n_pin': 'n_pin',
-            'load_rating_N': 'load_rating_N',
-            'excitation_V': 'excitation_V',
-            'sensitivity_vV': 'sensitivity_vV',
-            'unit': 'unit',
-        },
-        'unit': {
-            'kg': 'SENSOR_UNIT_KG',
-            'n': 'SENSOR_UNIT_N',
-        },
-    },
-    'resistance_sensor': {
-        'cfg_struct_name': 'resistance_sensor_config_t',
-        'init_func': 'resistance_sensor_init',
-        'cfg_struct_fields': {
-            'pin': 'pin',
-            'injected_current_uA': 'injected_current_uA',
-            'r_short': 'r_short',
-            'unit': 'unit',
-        },
-        'unit': {
-            'ohms': 'SENSOR_UNIT_OHMS',
-        },
-    },
-    'current_sensor': {
-        'cfg_struct_name': 'current_sensor_config_t',
-        'init_func': 'current_sensor_init',
-        'cfg_struct_fields': {
-            'pin': 'pin',
-            'shunt_resistor_ohms': 'shunt_resistor_ohms',
-            'csa_gain': 'csa_gain',
-            'unit': 'unit',
-        },
-        'unit': {
-            'a': 'SENSOR_UNIT_A',
-        },
-    },
-}
+sensor_templates, _ = read_json(f'{script_dir}/sensor_templates.json')
+control_templates, _ = read_json(f'{script_dir}/control_templates.json')
+
 # json name to c enum for controls
 control_fields = {
     'default_state': {
@@ -219,24 +151,36 @@ def generate_sensor_init(sensor_cfg: dict, sensor_type: str, mapping: dict, inde
     }}
     """
 
-def generate_control_init(control_cfg: dict, index: int) -> str:
+def generate_control_init(control_cfg: dict, control_type: str, mapping: dict, index: int) -> str:
+    template = control_templates[control_type]
 
     control_key = control_cfg['control_index']
     pin_map = mapping['control_map'][control_key]
 
-    pin = pin_map['pin']
+    # get the required config fields from the control template
+    cfg_struct_fields = []
+    for struct_field, json_key in template['cfg_struct_fields'].items():
 
-    json_default_state = control_cfg['default_state'].casefold()
-    default_state = control_fields['default_state'][json_default_state]
+        val = control_cfg.get(json_key)
+        if val is None:
+            val = pin_map.get(json_key)
+
+        if struct_field == 'unit':
+            val = template['unit'][val.casefold()]
+        elif struct_field == 'default_state':
+            val = template['default_state'][val.casefold()]
+
+        cfg_struct_fields.append(f'        .{struct_field} = {val},')
+
+    cfg_struct_fields_str = '\n'.join(cfg_struct_fields)
 
     return f"""\
     {{
-    const control_config_t control_cfg = {{
-        .gpio_num = {pin},
-        .default_state = {default_state},
+    const {template['cfg_struct_name']} cfg = {{
+{cfg_struct_fields_str}
     }};
 
-    ESP_RETURN_ON_ERROR(control_init(&controls[{index}], &control_cfg), TAG, "Failed to initialize control, index {index}");
+    ESP_RETURN_ON_ERROR({template['init_func']}(&controls[{index}], &cfg), TAG, "Failed to initialize {control_type}, index {index}");
     }}
     """
 
@@ -259,9 +203,10 @@ sensors_init_code = '\n'.join(sensors_init_code)
 
 controls_init_code = []
 controls_initialized = 0
-for control_cfg in config['controls'].values():
-    controls_init_code.append(generate_control_init(control_cfg, controls_initialized))
-    controls_initialized += 1
+for control_type, controls in config['controls'].items():
+    for control_cfg in controls.values():
+        controls_init_code.append(generate_control_init(control_cfg, control_type, mapping, controls_initialized))
+        controls_initialized += 1
 
 controls_init_code = '\n'.join(controls_init_code)
 
