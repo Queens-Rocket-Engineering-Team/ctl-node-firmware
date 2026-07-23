@@ -91,6 +91,8 @@ static qlcp_status_packet s_make_status_packet(uint8_t ack_sequence, qlcp_packet
 
     ring_buffer_idx = (ring_buffer_idx + 1) % STATUS_RING_BUFFER_LEN;
 
+    memset(control_data, 0, sizeof(qlcp_control_data) * CONFIG_NUM_CONTROLS);
+
     // right now this only handles bool controls, needs to be fixed
     for (size_t i = 0; i < CONFIG_NUM_CONTROLS; i++) {
         control_data[i].id = i;
@@ -105,6 +107,7 @@ static qlcp_status_packet s_make_status_packet(uint8_t ack_sequence, qlcp_packet
             break;
         case CONTROL_UNKNOWN:
             control_data[i].state.control_bool = QLCP_CS_ERROR;
+            break;
         };
     }
 
@@ -175,11 +178,11 @@ static void s_control_handler(app_ctx_t *app_ctx, qlcp_control_packet *control_p
         }
     }
 
-    ESP_LOGE(TAG, "%s", esp_err_to_name(err));
     if (err == ESP_OK) {
         payload_out->packet_type = QLCP_PT_STATUS;
         payload_out->payload_data.status = s_make_status_packet(control_packet->header.sequence, QLCP_PT_CONTROL, app_ctx);
     } else {
+        ESP_LOGE(TAG, "%s", esp_err_to_name(err));
         payload_out->packet_type = QLCP_PT_NACK;
         payload_out->payload_data.nack = s_make_nack_packet(control_packet->header.sequence, QLCP_PT_CONTROL, nack_err, app_ctx);
     }
@@ -299,6 +302,8 @@ void packet_handler(void *pvParams) {
         }
         // check for incoming packets from the tcp recv queue
         if (xQueueReceive(app_ctx->network_ctx->tcp_recv_queue_handle, &payload_in, pdMS_TO_TICKS(100)) == pdTRUE) {
+
+            memset(&payload_out, 0, sizeof(qlcp_server_payload));
 
             last_packet_time_us = esp_timer_get_time();
 
