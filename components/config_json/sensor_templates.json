@@ -1,0 +1,73 @@
+{
+    "thermocouple": {
+        "cfg_struct_name": "thermocouple_config_t",
+        "init_func": "thermocouple_init",
+        "cfg_struct_fields": {
+            "p_pin": "p_pin",
+            "n_pin": "n_pin",
+            "unit": "unit"
+        },
+        "unit": {
+            "c": "SENSOR_UNIT_C",
+            "k": "SENSOR_UNIT_K",
+            "f": "SENSOR_UNIT_F"
+        }
+    },
+    "pressure_transducer": {
+        "cfg_struct_name": "pressure_transducer_config_t",
+        "init_func": "pressure_transducer_init",
+        "cfg_struct_fields": {
+            "pin": "pin",
+            "resistor_ohms": "resistor_ohms",
+            "max_pressure_psi": "max_pressure_PSI",
+            "unit": "unit"
+        },
+        "unit": {
+            "psi": "SENSOR_UNIT_PSI",
+            "bar": "SENSOR_UNIT_BAR",
+            "pa": "SENSOR_UNIT_PA"
+        }
+    },
+    "load_cell": {
+        "cfg_struct_name": "load_cell_config_t",
+        "init_func": "load_cell_init",
+        "cfg_struct_fields": {
+            "p_pin": "p_pin",
+            "n_pin": "n_pin",
+            "load_rating_N": "load_rating_N",
+            "excitation_V": "excitation_V",
+            "sensitivity_vV": "sensitivity_vV",
+            "unit": "unit"
+        },
+        "unit": {
+            "kg": "SENSOR_UNIT_KG",
+            "n": "SENSOR_UNIT_N"
+        }
+    },
+    "resistance_sensor": {
+        "cfg_struct_name": "resistance_sensor_config_t",
+        "init_func": "resistance_sensor_init",
+        "cfg_struct_fields": {
+            "pin": "pin",
+            "injected_current_uA": "injected_current_uA",
+            "r_short": "r_short",
+            "unit": "unit"
+        },
+        "unit": {
+            "ohms": "SENSOR_UNIT_OHMS"
+        }
+    },
+    "current_sensor": {
+        "cfg_struct_name": "current_sensor_config_t",
+        "init_func": "current_sensor_init",
+        "cfg_struct_fields": {
+            "pin": "pin",
+            "shunt_resistor_ohms": "shunt_resistor_ohms",
+            "csa_gain": "csa_gain",
+            "unit": "unit"
+        },
+        "unit": {
+            "a": "SENSOR_UNIT_A"
+        }
+    }
+}
