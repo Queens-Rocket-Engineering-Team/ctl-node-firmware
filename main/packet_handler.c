@@ -243,6 +243,8 @@ void packet_handler(void *pvParams) {
         EventBits_t stream_bits = xEventGroupGetBits(app_ctx->sensor_stream_event_group_handle);
 
         if (!(wifi_bits & SERVER_CONNECTED_BIT)) {
+            // reset config sent bool
+            app_ctx->config_sent = false;
             // disable data stream if disconnected
             if (stream_bits & SENSOR_STREAM_ENABLE_BIT) {
                 xEventGroupClearBits(app_ctx->sensor_stream_event_group_handle, SENSOR_STREAM_ENABLE_BIT);
@@ -253,7 +255,7 @@ void packet_handler(void *pvParams) {
         }
 
         // send config on connection
-        if (!app_ctx->network_ctx->config_sent && (wifi_bits & SERVER_CONNECTED_BIT)) {
+        if (!app_ctx->config_sent && (wifi_bits & SERVER_CONNECTED_BIT)) {
             last_packet_time_us = esp_timer_get_time();
             payload_out.packet_type = QLCP_PT_CONFIG;
 
@@ -270,7 +272,7 @@ void packet_handler(void *pvParams) {
             payload_out.payload_data.config = config;
 
             xQueueSend(app_ctx->network_ctx->tcp_send_queue_handle, (void *)&payload_out, 0);
-            app_ctx->network_ctx->config_sent = true;
+            app_ctx->config_sent = true;
             ESP_LOGI(TAG, "Sent config to server");
 
             // start timesync req loop

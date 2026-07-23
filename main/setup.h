@@ -4,6 +4,7 @@
 #include <esp_netif.h>
 #include <freertos/FreeRTOS.h>
 #include <stdatomic.h>
+#include <stdbool.h>
 
 #include "ads112c04.h"
 #include "config_json.h"
@@ -20,6 +21,7 @@ typedef struct {
     atomic_int_least64_t ts_offset;
     atomic_uint_least8_t sequence;
     i2c_master_bus_handle_t bus_handle;
+    bool config_sent;
 } app_ctx_t;
 
 esp_err_t app_setup(app_ctx_t *app_ctx);

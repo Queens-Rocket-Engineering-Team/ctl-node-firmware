@@ -4,6 +4,7 @@
 #include <esp_err.h>
 #include <esp_wifi.h>
 #include <nvs_flash.h>
+#include <stdbool.h>
 
 #include "ads112c04.h"
 #include "config_json.h"
@@ -120,6 +121,8 @@ esp_err_t app_setup(app_ctx_t *app_ctx) {
     static network_ctx_t network_ctx = {0};
     ESP_RETURN_ON_ERROR(s_network_setup(&network_ctx), TAG, "Failed to set up network_ctx");
     app_ctx->network_ctx = &network_ctx;
+
+    app_ctx->config_sent = false;
 
     return ESP_OK;
 }
