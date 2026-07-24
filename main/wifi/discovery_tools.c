@@ -1,4 +1,6 @@
 #include "wifi_tools.h"
+#include "qlcp_lib.h"
+
 #include <esp_err.h>
 #include <esp_log.h>
 #include <esp_netif.h>
@@ -6,13 +8,12 @@
 #include <stdint.h>
 #include <string.h>
 
-#define SSDP_PORT "1900"
-#define SSDP_IP "239.255.255.250"
-#define SSDP_ANY_IP "0.0.0.0"
+#define DISCOVERY_PORT "10000"
+#define DISCOVERY_IP "239.100.0.1"
 
-static const char *TAG = "SSDP";
+static const char *TAG = "DISCOVERY";
 
-esp_err_t ssdp_discover_server(int32_t *sock, char server_ip[], size_t server_ip_len, esp_netif_t *netif_handle) {
+esp_err_t discover_server(int32_t *sock, char server_ip[], size_t server_ip_len, esp_netif_t *netif_handle) {
     if (sock == NULL || server_ip == NULL || netif_handle == NULL) {
         return ESP_ERR_INVALID_ARG;
     }
@@ -30,7 +31,7 @@ esp_err_t ssdp_discover_server(int32_t *sock, char server_ip[], size_t server_ip
     hints.ai_socktype = SOCK_DGRAM;
     hints.ai_protocol = IPPROTO_UDP;
 
-    err = getaddrinfo(SSDP_ANY_IP, SSDP_PORT, &hints, &res);
+    err = getaddrinfo("0.0.0.0", DISCOVERY_PORT, &hints, &res);
     if (err != 0) {
         ret = ESP_FAIL;
         goto cleanup;
@@ -49,14 +50,13 @@ esp_err_t ssdp_discover_server(int32_t *sock, char server_ip[], size_t server_ip
         goto cleanup;
     }
 
-    // bind the socket to port 1900, any ip
     err = bind(*sock, res->ai_addr, res->ai_addrlen);
     if (err != 0) {
         ret = ESP_FAIL;
         goto cleanup;
     }
 
-    // add membership to SSDP multicast ip
+    // add membership to discovery multicast
     esp_netif_ip_info_t ip_info = {0};
     esp_netif_get_ip_info(netif_handle, &ip_info);
 
@@ -65,7 +65,7 @@ esp_err_t ssdp_discover_server(int32_t *sock, char server_ip[], size_t server_ip
 
     ip_mreq imreq = {0};
     imreq.imr_interface.s_addr = local_addr.s_addr;
-    err = inet_pton(AF_INET, SSDP_IP, &imreq.imr_multiaddr.s_addr);
+    err = inet_pton(AF_INET, DISCOVERY_IP, &imreq.imr_multiaddr.s_addr);
     if (err != 1) {
         ret = ESP_FAIL;
         goto cleanup;
@@ -76,28 +76,27 @@ esp_err_t ssdp_discover_server(int32_t *sock, char server_ip[], size_t server_ip
         goto cleanup;
     }
 
-    // listen for SSDP M-SEARCH from server
+    // listen for discovery packet from server
     struct sockaddr_in remote_addr = {0};
     socklen_t remote_addr_len;
-    static char buffer[1024];
+    static uint8_t buffer[512];
 
     while (1) {
-        remote_addr_len = sizeof remote_addr;
-        ssize_t len = recvfrom(*sock, buffer, sizeof buffer - 1, 0, (struct sockaddr *)&remote_addr, &remote_addr_len);
+        remote_addr_len = sizeof(remote_addr);
+        ssize_t len = recvfrom(*sock, buffer, sizeof(buffer), 0, (struct sockaddr *)&remote_addr, &remote_addr_len);
 
         if (len < 0) {
             ret = ESP_FAIL;
             goto cleanup;
         }
 
-        buffer[len] = '\0'; // recvfrom does not null terminate buffer
+        // check if received data matches server discovery request
+        qlcp_client_payload payload = {0};
+        if (qlcp_decode_server_to_client(&payload, buffer, len) != QLCP_OK) {
+            continue;
+        }
 
-        ESP_LOGD(TAG, "%s", buffer);
-
-        // check if received data matches server SSDP request
-        if (strcasestr(buffer, "M-SEARCH * HTTP/1.1") != NULL &&
-            strcasestr(buffer, "HOST: 239.255.255.250:1900") != NULL &&
-            strcasestr(buffer, "ST: urn:qretprop:espdevice:1") != NULL) {
+        if (payload.packet_type == QLCP_PT_DISCOVERY) {
             break;
         }
     }

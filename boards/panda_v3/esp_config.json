@@ -2,7 +2,7 @@
     "device_name": "PANDA-V3",
     "device_type": "Sensor Monitor",
 
-    "sensor_info": {
+    "sensors": {
         "pressure_transducer": {
             "PT101": {
                 "sensor_index": "PT1",
@@ -18,6 +18,12 @@
             },
             "PT202": {
                 "sensor_index": "PT3",
+                "resistor_ohms": 250,
+                "max_pressure_PSI": 1000,
+                "unit": "PSI"
+            },
+            "PT203": {
+                "sensor_index": "PT4",
                 "resistor_ohms": 250,
                 "max_pressure_PSI": 1000,
                 "unit": "PSI"
@@ -43,7 +49,7 @@
                 "load_rating_N" : 29430,
                 "excitation_V" : 5,
                 "sensitivity_vV" : 2,
-                "unit" : "kg"
+                "unit" : "n"
             }
         },
 
@@ -58,50 +64,63 @@
     },
 
     "controls": {
-        "AV201": {
-            "control_index": "AV_FILL",
-            "default_state": "CLOSED",
-            "type": "solenoid"
+        "solenoid": {
+            "AV201": {
+                "control_index": "AV_FILL",
+                "default_state": "CLOSED",
+                "type": "BOOL",
+                "unit": "unitless"
+            },
+            "AV205": {
+                "control_index": "AV_RUN",
+                "default_state": "CLOSED",
+                "type": "BOOL",
+                "unit": "unitless"
+            },
+            "AV204": {
+                "control_index": "AV3",
+                "default_state": "OPEN",
+                "type": "BOOL",
+                "unit": "unitless"
+            },
+            "AV203": {
+                "control_index": "AV4",
+                "default_state": "CLOSED",
+                "type": "BOOL",
+                "unit": "unitless"
+            },
+            "AV101": {
+                "control_index": "AV5",
+                "default_state": "OPEN",
+                "type": "BOOL",
+                "unit": "unitless"
+            },
+            "AV202": {
+                "control_index": "AV6",
+                "default_state": "OPEN",
+                "type": "BOOL",
+                "unit": "unitless"
+            }
         },
-        "AV205": {
-            "control_index": "AV_RUN",
-            "default_state": "CLOSED",
-            "type": "solenoid"
-        },
-        "AV204": {
-            "control_index": "AV3",
-            "default_state": "OPEN",
-            "type": "solenoid"
-        },
-        "AV203": {
-            "control_index": "AV4",
-            "default_state": "CLOSED",
-            "type": "solenoid"
-        },
-        "AV101": {
-            "control_index": "AV5",
-            "default_state": "OPEN",
-            "type": "solenoid"
-        },
-        "AV202": {
-            "control_index": "AV6",
-            "default_state": "OPEN",
-            "type": "solenoid"
-        },
-        "Safe24": {
-            "control_index": "SAFE_24V_CTL",
-            "default_state": "OPEN",
-            "type": "relay"
-        },
-        "IgnPrime": {
-            "control_index": "IGNITOR_PRIME_CTL",
-            "default_state": "OPEN",
-            "type": "relay"
-        },
-        "IgnRun": {
-            "control_index": "IGNITOR_RUN_CTL",
-            "default_state": "OPEN",
-            "type": "relay"
+        "relay": {
+            "Safe24": {
+                "control_index": "SAFE_24V_CTL",
+                "default_state": "OPEN",
+                "type": "BOOL",
+                "unit": "unitless"
+            },
+            "IgnPrime": {
+                "control_index": "IGNITOR_PRIME_CTL",
+                "default_state": "OPEN",
+                "type": "BOOL",
+                "unit": "unitless"
+            },
+            "IgnRun": {
+                "control_index": "IGNITOR_RUN_CTL",
+                "default_state": "OPEN",
+                "type": "BOOL",
+                "unit": "unitless"
+            }
         }
     }
 }
