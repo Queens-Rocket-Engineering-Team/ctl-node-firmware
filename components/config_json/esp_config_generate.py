@@ -1,9 +1,19 @@
+"""
+This python script generates the C initialization code for adcs, sensors, and controls
+from the provided config and mapping json files. This allows dynamic memory allocation
+to be avoided by providing the required memory at compile time. To add new sensors or
+controls to be initialized, modify the sensor_templates.json and control_templates.json files.
+To run the script, use:
+python3 esp_config_generate.py input_config_path input_mapping_path output_header_path output_source_path
+"""
+
 import argparse
 import json
 from pathlib import Path
 script_dir = Path(__file__).resolve().parent
 
 def read_json(file_path: str) -> tuple[dict, str]:
+    """Read a JSON file into a Python dictionary and a minimized string."""
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
             json_dict = json.load(file)
@@ -13,7 +23,7 @@ def read_json(file_path: str) -> tuple[dict, str]:
         print(f"Failed to read config file: {e}")   
         raise
     
-
+# parse the CLI arguments
 parser = argparse.ArgumentParser(description="Convert JSON config to c constants and initialization code")
 parser.add_argument('config', type=str)
 parser.add_argument('mapping', type=str)
@@ -21,6 +31,7 @@ parser.add_argument('header', type=str)
 parser.add_argument('source', type=str)
 args = parser.parse_args()
 
+# read the config and mapping jsons supplied through the cli
 config, config_str = read_json(args.config)
 mapping, _ = read_json(args.mapping)
 
@@ -35,6 +46,7 @@ scl_pin = mapping['i2c_bus']['scl_pin']
 i2c_freq = mapping['i2c_bus']['frequency_Hz']
 wifi_indicator_pin = mapping.get('wifi_indicator_pin')
 
+# allow the omission of a wifi indicator
 wifi_pin_define = ''
 if wifi_indicator_pin is not None:
     wifi_pin_define = f'#define CONFIG_WIFI_INDICATOR_PIN {wifi_indicator_pin}'
@@ -42,14 +54,14 @@ if wifi_indicator_pin is not None:
 header_content = f"""\
 #pragma once
 
+// Auto-generated header from esp_config.json and esp_mapping.json
+
 #include <esp_err.h>
 #include <stdint.h>
 
 #include "ads112c04.h"
 #include "sensor.h"
 #include "control.h"
-
-// Auto-generated header from esp_config.json and esp_mapping.json
 
 extern const char json_config_str[];
 #define JSON_CONFIG_LEN {len(config_str)}
@@ -81,11 +93,12 @@ except Exception as e:
 
 # .c file generation
 
-# template for mapping between values in the json config and corresponding c sensor config structs
+# templates for mapping between values in the json config/mapping and corresponding c sensor config structs
 sensor_templates, _ = read_json(f'{script_dir}/sensor_templates.json')
 control_templates, _ = read_json(f'{script_dir}/control_templates.json')
 
 def generate_adc_init(adc_cfg: dict, index: int) -> str:
+    """Generate the initialization C code block for an ADC."""
 
     adc_addr = adc_cfg['addr']
     adc_DRDY = adc_cfg['DRDY_pin']
@@ -104,6 +117,7 @@ def generate_adc_init(adc_cfg: dict, index: int) -> str:
     """
 
 def generate_sensor_init(sensor_cfg: dict, sensor_type: str, mapping: dict, index: int) -> str:
+    """Generate the initialization C code block for a sensor."""
     template = sensor_templates[sensor_type]
 
     sensor_key = sensor_cfg['sensor_index']
@@ -123,7 +137,7 @@ def generate_sensor_init(sensor_cfg: dict, sensor_type: str, mapping: dict, inde
         if struct_field == 'unit':
             val = template['unit'][val.casefold()]
 
-        cfg_struct_fields.append(f'        .{struct_field} = {val},')
+        cfg_struct_fields.append(f'        .{struct_field} = {val},') # space is to maintain proper indenting in the generated file
 
     cfg_struct_fields_str = '\n'.join(cfg_struct_fields)
 
@@ -144,6 +158,7 @@ def generate_sensor_init(sensor_cfg: dict, sensor_type: str, mapping: dict, inde
     """
 
 def generate_control_init(control_cfg: dict, control_type: str, mapping: dict, index: int) -> str:
+    """Generate the initialization C code block for a control."""
     template = control_templates[control_type]
 
     control_key = control_cfg['control_index']
@@ -162,7 +177,7 @@ def generate_control_init(control_cfg: dict, control_type: str, mapping: dict, i
         elif struct_field == 'default_state':
             val = template['default_state'][val.casefold()]
 
-        cfg_struct_fields.append(f'        .{struct_field} = {val},')
+        cfg_struct_fields.append(f'        .{struct_field} = {val},') # space is to maintain proper indenting in the generated file
 
     cfg_struct_fields_str = '\n'.join(cfg_struct_fields)
 
@@ -175,6 +190,8 @@ def generate_control_init(control_cfg: dict, control_type: str, mapping: dict, i
     ESP_RETURN_ON_ERROR({template['init_func']}(&controls[{index}], &cfg), TAG, "Failed to initialize {control_type}, index {index}");
     }}
     """
+
+# generate initialization code blocks based on the config
 
 adcs_init_code = []
 adcs_initialized = 0
@@ -203,6 +220,8 @@ for control_type, controls in config['controls'].items():
 controls_init_code = '\n'.join(controls_init_code)
 
 source_content = f"""\
+// Auto-generated code from esp_config.json and esp_mapping.json
+
 #include <esp_check.h>
 #include <esp_err.h>
 #include <stdint.h>
@@ -211,11 +230,9 @@ source_content = f"""\
 #include "sensor.h"
 #include "control.h"
 
-#include "config_json.h"
+#include "{Path(args.header).name}"
 
 static const char *TAG = "CONFIG JSON";
-
-// Auto-generated code from esp_config.json and esp_mapping.json
 
 const char json_config_str[] = "{config_str.replace(r'"', r'\"')}";
 
