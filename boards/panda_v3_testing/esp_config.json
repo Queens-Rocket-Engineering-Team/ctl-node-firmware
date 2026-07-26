@@ -121,6 +121,14 @@
                 "type": "bool",
                 "unit": "unitless"
             }
+        },
+        "heater": {
+            "Heater1": {
+                "control_index": "HEATER_1",
+                "default_state": 0,
+                "type": "uint32",
+                "unit": "C"
+            }
         }
     }
 }

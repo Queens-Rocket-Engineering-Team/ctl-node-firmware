@@ -2,16 +2,10 @@
 #include <esp_log.h>
 #include <esp_timer.h>
 #include <freertos/FreeRTOS.h>
-#include <stdatomic.h>
-#include <stdbool.h>
 
 #include "packet_handler.h"
-#include "config_json.h"
-#include "control.h"
-#include "qlcp_lib.h"
 #include "sensor_stream.h"
 #include "setup.h"
-#include "wifi_tools.h"
 #include "board_setup.h"
 
 #define PACKET_HANDLER_STACK_SIZE 4096
