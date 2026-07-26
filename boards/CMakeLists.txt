@@ -5,4 +5,6 @@ idf_component_register(
     "${BOARD}"
     REQUIRES
     esp_common
+    controls
+    freertos
 )

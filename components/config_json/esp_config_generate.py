@@ -174,7 +174,7 @@ def generate_control_init(control_cfg: dict, control_type: str, mapping: dict, i
 
         if struct_field == 'unit':
             val = template['unit'][val.casefold()]
-        elif struct_field == 'default_state':
+        elif struct_field == 'default_state' and template.get('default_state') is not None:
             val = template['default_state'][val.casefold()]
 
         cfg_struct_fields.append(f'        .{struct_field} = {val},') # space is to maintain proper indenting in the generated file
@@ -187,7 +187,8 @@ def generate_control_init(control_cfg: dict, control_type: str, mapping: dict, i
 {cfg_struct_fields_str}
     }};
 
-    ESP_RETURN_ON_ERROR({template['init_func']}(&controls[{index}], &cfg), TAG, "Failed to initialize {control_type}, index {index}");
+    ESP_RETURN_ON_ERROR({template['init_func']}(&controls[{index}].control.{template['type']}, &cfg), TAG, "Failed to initialize {control_type}, index {index}");
+    controls[{index}].control_type = {'CONTROL_TYPE_' + (template['type'].upper())};
     }}
     """
 
