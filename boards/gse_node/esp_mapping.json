@@ -1,0 +1,69 @@
+{
+    "i2c_bus": {
+        "sda_pin": 7,
+        "scl_pin": 6,
+        "frequency_Hz": 1000000
+    },
+    "wifi_indicator_pin": 38,
+
+    "ADC_map": {
+        "ADC1": {
+            "addr": 64,
+            "DRDY_pin": 5
+        },
+        "ADC2": {
+            "addr": 65,
+            "DRDY_pin": 4
+        },
+        "ADC3": {
+            "addr": 68,
+            "DRDY_pin": 9
+        },
+        "ADC4": {
+            "addr": 69,
+            "DRDY_pin": 10
+        }
+    },
+    "sensor_map": {
+        "LC_FILL": {
+            "ADC_index": "ADC1",
+            "p_pin": 1,
+            "n_pin": 0
+        }
+    },
+    "control_map": {
+        "ACT1": {
+            "pin": 8
+        },
+        "ACT2": {
+            "pin": 17
+        },
+        "ACT3": {
+            "pin": 16
+        },
+        "ACT4": {
+            "pin": 15
+        },
+        "IGN_SAFE24_CTL": {
+            "pin": 13
+        },
+        "IGN_PRIME_CTL": {
+            "pin": 11
+        },
+        "IGN_RUN_CTL": {
+            "pin": 12
+        },
+        "HEATER_1_POWER": {
+            "pin": 21
+        },
+        "HEATER_1_PWM": {
+            "v_pin": 1
+        },
+        "HEATER_2_POWER": {
+            "pin": 48
+        },
+        "HEATER_2_PWM": {
+            "v_pin": 2
+        }
+    }
+}
