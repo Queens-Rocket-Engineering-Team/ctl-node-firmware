@@ -1,0 +1,73 @@
+{
+    "device_name": "GSE-NODE",
+    "device_type": "Sensor Monitor",
+
+    "sensors": {
+        "load_cell": {
+            "LCFill": {
+                "sensor_index": "LC_FILL",
+                "load_rating_N": 1962,
+                "excitation_V": 5,
+                "sensitivity_vV": 2,
+                "unit": "kg"
+            }
+        }
+    },
+
+    "controls": {
+        "solenoid": {
+            "ACT1": {
+                "control_index": "ACT1",
+                "default_state": "OPEN",
+                "type": "bool",
+                "unit": "unitless"
+            },
+            "ACT2": {
+                "control_index": "ACT2",
+                "default_state": "OPEN",
+                "type": "bool",
+                "unit": "unitless"
+            },
+            "ACT3": {
+                "control_index": "ACT3",
+                "default_state": "OPEN",
+                "type": "bool",
+                "unit": "unitless"
+            },
+            "ACT4": {
+                "control_index": "ACT4",
+                "default_state": "OPEN",
+                "type": "bool",
+                "unit": "unitless"
+            }
+        },
+        "relay": {
+            "Safe24": {
+                "control_index": "IGN_SAFE24_CTL",
+                "default_state": "OPEN",
+                "type": "bool",
+                "unit": "unitless"
+            },
+            "IgnPrime": {
+                "control_index": "IGN_PRIME_CTL",
+                "default_state": "OPEN",
+                "type": "bool",
+                "unit": "unitless"
+            },
+            "IgnRun": {
+                "control_index": "IGN_RUN_CTL",
+                "default_state": "OPEN",
+                "type": "bool",
+                "unit": "unitless"
+            }
+        },
+        "heater": {
+            "Heater1": {
+                "control_index": "HEATER_1_PWM",
+                "default_state": 0,
+                "type": "uint32",
+                "unit": "C"
+            }
+        }
+    }
+}
