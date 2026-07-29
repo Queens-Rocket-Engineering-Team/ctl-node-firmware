@@ -29,6 +29,55 @@
             "ADC_index": "ADC1",
             "p_pin": 1,
             "n_pin": 0
+        },
+        "IGN_RES": {
+            "ADC_index": "ADC1",
+            "p_pin": 3,
+            "n_pin": 2
+        },
+        "IGN_HE": {
+            "ADC_index": "ADC2",
+            "pin": 1
+        },
+        "HEATER_1_HE": {
+            "ADC_index": "ADC2",
+            "pin": 0
+        },
+        "HEATER_2_HE": {
+            "ADC_index": "ADC2",
+            "pin": 2
+        },
+        "HEATER_1_TH1": {
+            "ADC_index": "ADC3",
+            "pin": 0
+        },
+        "HEATER_1_TH2": {
+            "ADC_index": "ADC3",
+            "pin": 1
+        },
+        "HEATER_1_TH3": {
+            "ADC_index": "ADC3",
+            "pin": 2
+        },
+        "HEATER_1_TH4": {
+            "ADC_index": "ADC3",
+            "pin": 3
+        },
+        "HEATER_2_TH1": {
+            "ADC_index": "ADC3",
+            "pin": 0
+        },
+        "HEATER_2_TH2": {
+            "ADC_index": "ADC3",
+            "pin": 1
+        },
+        "HEATER_2_TH3": {
+            "ADC_index": "ADC3",
+            "pin": 2
+        },
+        "HEATER_2_TH4": {
+            "ADC_index": "ADC3",
+            "pin": 3
         }
     },
     "control_map": {
