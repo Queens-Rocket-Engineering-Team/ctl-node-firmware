@@ -13,6 +13,21 @@
             "f": "SENSOR_UNIT_F"
         }
     },
+    "thermistor": {
+        "cfg_struct_name": "thermistor_config_t",
+        "init_func": "thermistor_init",
+        "cfg_struct_fields": {
+            "pin": "pin",
+            "beta": "beta",
+            "resistor_ohms": "resistor_ohms",
+            "unit": "unit"
+        },
+        "unit": {
+            "c": "SENSOR_UNIT_C",
+            "k": "SENSOR_UNIT_K",
+            "f": "SENSOR_UNIT_F"
+        }
+    },
     "pressure_transducer": {
         "cfg_struct_name": "pressure_transducer_config_t",
         "init_func": "pressure_transducer_init",

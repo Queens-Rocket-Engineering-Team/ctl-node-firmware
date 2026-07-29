@@ -6,11 +6,13 @@
 #include "pressure_transducer.h"
 #include "resistance_sensor.h"
 #include "thermocouple.h"
+#include "thermistor.h"
 #include "hall_effect_current.h"
 
 typedef union {
     sensor_base_t base;
     thermocouple_t thermocouple;
+    thermistor_t thermistor;
     pressure_transducer_t pressure_transducer;
     load_cell_t load_cell;
     current_sensor_t current_sensor;
