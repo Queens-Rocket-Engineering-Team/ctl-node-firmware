@@ -69,5 +69,17 @@
         "unit": {
             "a": "SENSOR_UNIT_A"
         }
+    },
+    "he_current": {
+        "cfg_struct_name": "he_current_config_t",
+        "init_func": "he_current_init",
+        "cfg_struct_fields": {
+            "pin": "pin",
+            "sensitivity_mV_A": "sensitivity_mV_A",
+            "unit": "unit"
+        },
+        "unit": {
+            "a": "SENSOR_UNIT_A"
+        }
     }
 }

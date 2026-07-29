@@ -11,6 +11,23 @@
                 "sensitivity_vV": 2,
                 "unit": "kg"
             }
+        },
+        "he_current": {
+            "IGNCurrent": {
+                "sensor_index": "IGN_HE",
+                "sensitivity_mV_A": 133,
+                "unit": "a"
+            },
+            "Heater1Current": {
+                "sensor_index": "HEATER_1_HE",
+                "sensitivity_mV_A": 133,
+                "unit": "a"
+            },
+            "Heater2Current": {
+                "sensor_index": "HEATER_2_HE",
+                "sensitivity_mV_A": 133,
+                "unit": "a"
+            }
         }
     },
 
