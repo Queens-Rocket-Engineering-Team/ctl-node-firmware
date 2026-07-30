@@ -286,6 +286,7 @@ esp_err_t ads112c04_internal_get_single_voltage_reading(
 
     // wait until DRDY pin pulls low
     if (xSemaphoreTake(ads112c04->semaphore_DRDY, pdMS_TO_TICKS(100)) == pdFALSE) {
+        ESP_LOGE(TAG, "Get single voltage reading timed out");
         return ESP_ERR_TIMEOUT;
     }
 
