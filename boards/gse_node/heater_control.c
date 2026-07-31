@@ -2,33 +2,151 @@
 #include <stdint.h>
 #include <esp_err.h>
 #include <esp_log.h>
+#include <esp_check.h>
+#include <driver/ledc.h>
+#include <math.h>
 
 #include "control.h"
 #include "heater_control.h"
 
 static const char *TAG = "HEATER CONTROL";
 
-#define QUEUE_LENGTH 1
-#define ITEM_SIZE sizeof(uint32_t)
+#define LEDC_MODE LEDC_LOW_SPEED_MODE
 
-void heater_control_task(void *pvParams) {
+#define PWM_HZ 10
 
-    StaticQueue_t xStaticQueue;
-    uint8_t ucQueueStorageArea[QUEUE_LENGTH * ITEM_SIZE];
+#define PID_SAMPLE_RATE_S 1
+
+// these constants assume an error in units of C and a normalized output from 0 to 1 for duty cycle, used with a 300w heater (STILL NEED TO BE TUNED)
+#define PID_KP 1
+#define PID_KI 1
+#define PID_KD 1
+
+typedef struct {
+    float kp;
+    float ki;
+    float kd;
+    float integral;
+    float setpoint;
+    float prev_measurement;
+    float dt;
+    float output_max;
+    float output_min;
+} pid_ctx_t;
+
+static float pid_step(pid_ctx_t *pid, float measurement) {
+    const float error = pid->setpoint - measurement;
+
+    const float proportional = pid->kp * error;
+
+    pid->integral += pid->ki * error * pid->dt;
+    if (pid->integral > pid->output_max) {
+        pid->integral = pid->output_max;
+    } else if (pid->integral < pid->output_min) {
+        pid->integral = pid->output_min;
+    }
+
+    const float derivative = pid->kd * (pid->prev_measurement - measurement) / pid->dt;
+
+    float output = proportional + pid->integral + derivative;
+    if (output > pid->output_max) {
+        output = pid->output_max;
+    } else if (output < pid->output_min) {
+        output = pid->output_min;
+    }
+
+    pid->prev_measurement = measurement;
+    return output;
+}
+
+esp_err_t heater_control_init(heater_ctx_t *heater_ctx) {
+    // create a queue for the setpoint and register it in the queue registry
 
     QueueHandle_t heater_queue_handle = xQueueCreateStatic(
-        QUEUE_LENGTH, ITEM_SIZE, ucQueueStorageArea, &xStaticQueue
+        HEATER_QUEUE_LENGTH, HEATER_ITEM_SIZE, heater_ctx->ucQueueStorageArea, &heater_ctx->xStaticQueue
     );
 
-    esp_err_t err = queue_registry_register(heater_queue_handle, 1);
+    esp_err_t err = queue_registry_register(heater_queue_handle, heater_ctx->queue_id);
     if (err != ESP_OK) {
         ESP_LOGE(TAG, "Failed to register heater into queue registry, err: %s", esp_err_to_name(err));
     }
+    return err;
+}
 
+void heater_control_task(void *pvParams) {
+    heater_ctx_t *heater_ctx = (heater_ctx_t *)pvParams;
+
+    QueueHandle_t heater_queue_handle = {0};
+    queue_registry_get(&heater_queue_handle, heater_ctx->queue_id);
+
+    // initialize the pwm driver
+    ledc_timer_config_t heater_timer = {
+        .speed_mode = LEDC_MODE,
+        .duty_resolution = LEDC_TIMER_10_BIT,
+        .timer_num = heater_ctx->timer,
+        .freq_hz = PWM_HZ,
+        .clk_cfg = LEDC_AUTO_CLK,
+    };
+    ESP_ERROR_CHECK_WITHOUT_ABORT(ledc_timer_config(&heater_timer));
+
+    ledc_channel_config_t heater_channel = {
+        .speed_mode     = LEDC_MODE,
+        .channel        = heater_ctx->channel,
+        .timer_sel      = heater_ctx->timer,
+        .gpio_num       = heater_ctx->pwm_pin,
+        .duty           = 0, // set duty to 0%
+        .hpoint         = 0,
+    };
+    ESP_ERROR_CHECK_WITHOUT_ABORT(ledc_channel_config(&heater_channel));
+
+    // set up pid controller
+    pid_ctx_t pid = {
+        .kp = PID_KP,
+        .ki = PID_KI,
+        .kd = PID_KD,
+        .integral = 0,
+        .setpoint = 0,
+        .prev_measurement = 0,
+        .dt = PID_SAMPLE_RATE_S,
+        .output_max = 1,
+        .output_min = 0,
+    };
+
+    float duty_cycle = 0;
+    float reading = 0;
+    float avg_reading = 0;
+    uint32_t duty_cycle_10_bit;
+
+    TickType_t last_wake_time = xTaskGetTickCount();
+
+    // control loop
     while (1) {
-        // testing queue recieve
+        // recieve a new setpoint from queue
         uint32_t new_setpoint = 0;
-        xQueueReceive(heater_queue_handle, &new_setpoint, portMAX_DELAY);
-        ESP_LOGI(TAG, "New setpoint: %u", new_setpoint);
+        if (xQueueReceive(heater_queue_handle, &new_setpoint, 0) == pdTRUE) {
+            pid.setpoint = new_setpoint;
+            ESP_LOGI(TAG, "New setpoint: %u", new_setpoint);
+        }
+
+        // get the average temperature reading
+        avg_reading = 0;
+        for (size_t i = 0; i < heater_ctx->num_thermistors; i++) {
+            get_thermistor_reading(&heater_ctx->thermistors[i], &reading);
+            avg_reading += reading;
+        }
+        avg_reading /= heater_ctx->num_thermistors;
+
+        // find duty cycle from pid controller
+        duty_cycle = pid_step(&pid, avg_reading);
+
+        // update pwm duty cycle
+        duty_cycle_10_bit = roundf(1023 * duty_cycle);
+        if (duty_cycle_10_bit > 1023) {
+            duty_cycle_10_bit = 1023;
+        }
+        ledc_set_duty_and_update(LEDC_MODE, heater_ctx->channel, duty_cycle_10_bit, 0);
+
+        // delay until next loop
+        xTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(PID_SAMPLE_RATE_S * 1000));
     }
 }

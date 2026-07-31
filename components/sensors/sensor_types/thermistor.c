@@ -58,7 +58,7 @@ esp_err_t get_thermistor_reading(thermistor_t *thermistor, float *temperature) {
 
     const float resistance = voltage * thermistor->resistor_ohms / (5.0f - voltage);
 
-    const float temp_K = 1.0f / ((1.0f / 298.15f) + (1.0f / thermistor->beta) * log(resistance / thermistor->resistor_ohms));
+    const float temp_K = 1.0f / ((1.0f / 298.15f) + (1.0f / thermistor->beta) * logf(resistance / thermistor->resistor_ohms));
 
     if (thermistor->base.unit == SENSOR_UNIT_C) {
         *temperature = temp_K - 273.15f;
