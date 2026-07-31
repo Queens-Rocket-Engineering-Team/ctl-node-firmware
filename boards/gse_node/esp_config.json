@@ -22,11 +22,6 @@
                 "sensor_index": "HEATER_1_HE",
                 "sensitivity_mV_A": 133,
                 "unit": "A"
-            },
-            "Heater2Current": {
-                "sensor_index": "HEATER_2_HE",
-                "sensitivity_mV_A": 133,
-                "unit": "A"
             }
         },
         "thermistor": {
@@ -50,30 +45,6 @@
             },
             "Heater1TH4": {
                 "sensor_index": "HEATER_1_TH4",
-                "beta": 3950,
-                "resistor_ohms": 10000,
-                "unit": "C"
-            },
-            "Heater2TH1": {
-                "sensor_index": "HEATER_2_TH1",
-                "beta": 3950,
-                "resistor_ohms": 10000,
-                "unit": "C"
-            },
-            "Heater2TH2": {
-                "sensor_index": "HEATER_2_TH2",
-                "beta": 3950,
-                "resistor_ohms": 10000,
-                "unit": "C"
-            },
-            "Heater2TH3": {
-                "sensor_index": "HEATER_2_TH3",
-                "beta": 3950,
-                "resistor_ohms": 10000,
-                "unit": "C"
-            },
-            "Heater2TH4": {
-                "sensor_index": "HEATER_2_TH4",
                 "beta": 3950,
                 "resistor_ohms": 10000,
                 "unit": "C"

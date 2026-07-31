@@ -25,3 +25,5 @@ typedef struct {
 } app_ctx_t;
 
 esp_err_t app_setup(app_ctx_t *app_ctx);
+
+esp_err_t app_init_devices(app_ctx_t *app_ctx);
