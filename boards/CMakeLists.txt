@@ -2,9 +2,13 @@ idf_component_register(
     SRC_DIRS
     "${BOARD}"
     INCLUDE_DIRS
+    "."
     "${BOARD}"
     REQUIRES
     esp_common
     controls
+    sensors
     freertos
+    esp_driver_ledc
+    esp_driver_gpio
 )

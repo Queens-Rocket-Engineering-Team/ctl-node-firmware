@@ -99,21 +99,6 @@ esp_err_t app_setup(app_ctx_t *app_ctx) {
     app_ctx->sensor_stream_event_group_handle = xEventGroupCreateStatic(&xEventGroup_SENSORSTREAM);
     configASSERT(app_ctx->sensor_stream_event_group_handle);
 
-    // set up sensor stream task
-    static StaticTask_t xTaskBuffer_SENSORSTREAM;
-    static StackType_t xStack_SENSORSTREAM[SENSOR_STREAM_STACK_SIZE];
-
-    app_ctx->sensor_stream_handle = xTaskCreateStatic(
-        sensor_stream,
-        "Sensor Stream",
-        SENSOR_STREAM_STACK_SIZE,
-        (void *)app_ctx,
-        1,
-        xStack_SENSORSTREAM,
-        &xTaskBuffer_SENSORSTREAM
-    );
-    configASSERT(app_ctx->sensor_stream_handle);
-
     app_ctx->sequence = 0;
     app_ctx->ts_offset = 0;
 
