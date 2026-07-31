@@ -83,16 +83,6 @@ esp_err_t app_setup(app_ctx_t *app_ctx) {
         ESP_RETURN_ON_ERROR(i2c_master_probe(app_ctx->bus_handle, adc_addr, 50), TAG, "ADC not found on I2C bus");
     }
 
-    ESP_RETURN_ON_ERROR(
-        config_sensors_init(app_ctx->sensors, CONFIG_NUM_SENSORS, app_ctx->adcs, CONFIG_NUM_ADCS),
-        TAG,
-        "Failed to initialize sensors"
-    );
-
-    ESP_RETURN_ON_ERROR(
-        config_controls_init(app_ctx->controls, CONFIG_NUM_CONTROLS), TAG, "Failed to initialize controls"
-    );
-
     // set up sensor stream event group
     static StaticEventGroup_t xEventGroup_SENSORSTREAM;
 
@@ -108,6 +98,25 @@ esp_err_t app_setup(app_ctx_t *app_ctx) {
     app_ctx->network_ctx = &network_ctx;
 
     app_ctx->config_sent = false;
+
+    return ESP_OK;
+}
+
+// initialize all sensors and controls (must be done after board_setup since it requires the adcs)
+esp_err_t app_init_devices(app_ctx_t *app_ctx) {
+    if (app_ctx == NULL) {
+        return ESP_ERR_INVALID_ARG;
+    }
+
+    ESP_RETURN_ON_ERROR(
+        config_sensors_init(app_ctx->sensors, CONFIG_NUM_SENSORS, app_ctx->adcs, CONFIG_NUM_ADCS),
+        TAG,
+        "Failed to initialize sensors"
+    );
+
+    ESP_RETURN_ON_ERROR(
+        config_controls_init(app_ctx->controls, CONFIG_NUM_CONTROLS), TAG, "Failed to initialize controls"
+    );
 
     return ESP_OK;
 }
