@@ -82,7 +82,7 @@ void heater_control_task(void *pvParams) {
     // initialize the pwm driver
     ledc_timer_config_t heater_timer = {
         .speed_mode = LEDC_MODE,
-        .duty_resolution = LEDC_TIMER_10_BIT,
+        .duty_resolution = LEDC_TIMER_14_BIT,
         .timer_num = heater_ctx->timer,
         .freq_hz = PWM_HZ,
         .clk_cfg = LEDC_AUTO_CLK,
@@ -115,7 +115,7 @@ void heater_control_task(void *pvParams) {
     float duty_cycle = 0;
     float reading = 0;
     float avg_reading = 0;
-    uint32_t duty_cycle_10_bit;
+    uint32_t duty_cycle_14_bit;
 
     TickType_t last_wake_time = xTaskGetTickCount();
 
@@ -140,11 +140,11 @@ void heater_control_task(void *pvParams) {
         duty_cycle = pid_step(&pid, avg_reading);
 
         // update pwm duty cycle
-        duty_cycle_10_bit = roundf(1023 * duty_cycle);
-        if (duty_cycle_10_bit > 1023) {
-            duty_cycle_10_bit = 1023;
+        duty_cycle_14_bit = roundf(16383 * duty_cycle);
+        if (duty_cycle_14_bit > 16383) {
+            duty_cycle_14_bit = 16383;
         }
-        ledc_set_duty_and_update(LEDC_MODE, heater_ctx->channel, duty_cycle_10_bit, 0);
+        ledc_set_duty_and_update(LEDC_MODE, heater_ctx->channel, duty_cycle_14_bit, 0);
 
         // delay until next loop
         xTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(PID_SAMPLE_RATE_S * 1000));
