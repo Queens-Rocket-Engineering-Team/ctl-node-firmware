@@ -25,6 +25,10 @@ void app_main(void) {
         .num_adcs = CONFIG_NUM_ADCS,
     };
     ESP_ERROR_CHECK(board_setup(&board_ctx));
+    ESP_LOGI(TAG, "Board setup complete");
+
+    ESP_ERROR_CHECK(app_init_devices(&app_ctx));
+    ESP_LOGI(TAG, "Devices initialized");
 
     // start sensor stream task
     static StaticTask_t xTaskBuffer_SENSORSTREAM;
