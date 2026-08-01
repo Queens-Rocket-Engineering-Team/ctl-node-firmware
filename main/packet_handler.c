@@ -85,40 +85,41 @@ static qlcp_nack_packet s_make_nack_packet(uint8_t nack_sequence, qlcp_packet_ty
 
 static qlcp_status_packet s_make_status_packet(uint8_t ack_sequence, qlcp_packet_type ack_type, app_ctx_t *app_ctx) {
     static uint8_t ring_buffer_idx = 0;
-    static qlcp_control_data control_data_ring_buffer[STATUS_RING_BUFFER_LEN][CONFIG_NUM_CONTROLS] = {0};
+    static qlcp_status_data status_data_ring_buffer[STATUS_RING_BUFFER_LEN][CONFIG_NUM_CONTROLS] = {0};
 
-    qlcp_control_data *control_data = control_data_ring_buffer[ring_buffer_idx];
+    qlcp_status_data *status_data = status_data_ring_buffer[ring_buffer_idx];
 
     ring_buffer_idx = (ring_buffer_idx + 1) % STATUS_RING_BUFFER_LEN;
 
-    memset(control_data, 0, sizeof(qlcp_control_data) * CONFIG_NUM_CONTROLS);
+    memset(status_data, 0, sizeof(qlcp_control_data) * CONFIG_NUM_CONTROLS);
 
     // right now this only handles bool/v_uint32 controls
     for (size_t i = 0; i < CONFIG_NUM_CONTROLS; i++) {
-        control_data[i].id = i;
+        status_data[i].id = i;
+        status_data[i].status = QLCP_CONTROL_STATUS_CONFIRMED;
 
         switch (app_ctx->controls[i].control_type) {
         case CONTROL_TYPE_H_BOOL:
             {
-                control_data[i].type = QLCP_CONTROL_BOOL;
+                status_data[i].type = QLCP_CONTROL_BOOL;
 
                 const h_bool_control_state_t control_internal_state = h_bool_control_get_state(&app_ctx->controls[i].control.h_bool);
                 switch (control_internal_state) {
                 case BOOL_CONTROL_OPEN:
-                    control_data[i].state.control_bool = QLCP_CS_OPEN;
+                    status_data[i].state.control_bool = QLCP_CS_OPEN;
                     break;
                 case BOOL_CONTROL_CLOSED:
-                    control_data[i].state.control_bool = QLCP_CS_CLOSED;
+                    status_data[i].state.control_bool = QLCP_CS_CLOSED;
                     break;
                 case BOOL_CONTROL_UNKNOWN:
-                    control_data[i].state.control_bool = QLCP_CS_ERROR;
+                    status_data[i].status = QLCP_CONTROL_STATUS_ERROR;
                     break;
                 };
             }
             break;
         case CONTROL_TYPE_V_UINT32:
-            control_data[i].type = QLCP_CONTROL_UINT32;
-            control_data[i].state.control_uint32 = v_uint32_control_get_state(&app_ctx->controls[i].control.v_uint32);
+            status_data[i].type = QLCP_CONTROL_UINT32;
+            status_data[i].state.control_uint32 = v_uint32_control_get_state(&app_ctx->controls[i].control.v_uint32);
             break;
         default:
             continue;
@@ -130,7 +131,7 @@ static qlcp_status_packet s_make_status_packet(uint8_t ack_sequence, qlcp_packet
     const uint8_t sequence = atomic_fetch_add(&app_ctx->sequence, 1);
 
     const qlcp_status_packet status = {
-        .control_data = control_data,
+        .control_data = status_data,
         .control_count = CONFIG_NUM_CONTROLS,
         .ack_packet_type = ack_type,
         .ack_sequence = ack_sequence,
