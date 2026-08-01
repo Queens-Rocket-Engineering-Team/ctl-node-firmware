@@ -24,6 +24,14 @@
                 "unit": "A"
             }
         },
+        "ign_driver_resistance": {
+            "IGNResistance": {
+                "sensor_index": "IGN_RES",
+                "injected_current_mA": 5,
+                "preprocessing_gain": 28,
+                "unit": "ohms"
+            }
+        },
         "thermistor": {
             "Heater1TH1": {
                 "sensor_index": "HEATER_1_TH1",

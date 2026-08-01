@@ -25,4 +25,4 @@ esp_err_t resistance_sensor_init(
     const resistance_sensor_config_t *resistance_sensor_cfg
 );
 
-esp_err_t get_resistance_reading(resistance_sensor_t *resistance_sensor, float *weight);
+esp_err_t get_resistance_reading(resistance_sensor_t *resistance_sensor, float *resistance);

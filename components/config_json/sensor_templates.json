@@ -72,6 +72,20 @@
             "ohms": "SENSOR_UNIT_OHMS"
         }
     },
+    "ign_driver_resistance": {
+        "cfg_struct_name": "ign_driver_res_sensor_config_t",
+        "init_func": "ign_driver_res_sensor_init",
+        "cfg_struct_fields": {
+            "p_pin": "p_pin",
+            "n_pin": "n_pin",
+            "injected_current_mA": "injected_current_mA",
+            "preprocessing_gain": "preprocessing_gain",
+            "unit": "unit"
+        },
+        "unit": {
+            "ohms": "SENSOR_UNIT_OHMS"
+        }
+    },
     "current_sensor": {
         "cfg_struct_name": "current_sensor_config_t",
         "init_func": "current_sensor_init",
