@@ -5,6 +5,7 @@
 #include <esp_check.h>
 #include <driver/ledc.h>
 #include <math.h>
+#include <stdbool.h>
 
 #include "control.h"
 #include "heater_control.h"
@@ -38,15 +39,24 @@ static float pid_step(pid_ctx_t *pid, float measurement) {
     const float error = pid->setpoint - measurement;
 
     const float proportional = pid->kp * error;
-
-    pid->integral += pid->ki * error * pid->dt;
-    if (pid->integral > pid->output_max) {
-        pid->integral = pid->output_max;
-    } else if (pid->integral < pid->output_min) {
-        pid->integral = pid->output_min;
-    }
-
     const float derivative = pid->kd * (pid->prev_measurement - measurement) / pid->dt;
+
+    // compute output before updating integral
+    float unsaturated_output = proportional + pid->integral + derivative;
+
+    // only integrate if not saturated or if integrating moves out of saturation
+    bool max_saturated = (unsaturated_output >= pid->output_max) && (error > 0);
+    bool min_saturated = (unsaturated_output <= pid->output_min) && (error < 0);
+
+    if (!max_saturated && !min_saturated) {
+        pid->integral += pid->ki * error * pid->dt;
+        
+        if (pid->integral > pid->output_max) {
+            pid->integral = pid->output_max;
+        } else if (pid->integral < pid->output_min) {
+            pid->integral = pid->output_min;
+        }
+    }
 
     float output = proportional + pid->integral + derivative;
     if (output > pid->output_max) {
@@ -125,6 +135,7 @@ void heater_control_task(void *pvParams) {
         uint32_t new_setpoint = 0;
         if (xQueueReceive(heater_queue_handle, &new_setpoint, 0) == pdTRUE) {
             pid.setpoint = new_setpoint;
+            pid.integral = 0.0f; // reset integral on new setpoint
             ESP_LOGI(TAG, "New setpoint: %u", new_setpoint);
         }
 
@@ -138,13 +149,20 @@ void heater_control_task(void *pvParams) {
 
         // find duty cycle from pid controller
         duty_cycle = pid_step(&pid, avg_reading);
+        // clamp pwm duty cycle to avoid short pulses to fet
+        if (duty_cycle > 0.99f) {
+            duty_cycle = 1.0f;
+        } else if (duty_cycle < 0.01f) {
+            duty_cycle = 0.0f;
+        }
 
         // update pwm duty cycle
         duty_cycle_14_bit = roundf(16383 * duty_cycle);
         if (duty_cycle_14_bit > 16383) {
             duty_cycle_14_bit = 16383;
         }
-        ledc_set_duty_and_update(LEDC_MODE, heater_ctx->channel, duty_cycle_14_bit, 0);
+        ledc_set_duty(LEDC_MODE, heater_ctx->channel, duty_cycle_14_bit);
+        ledc_update_duty(LEDC_MODE, heater_ctx->channel);
 
         // delay until next loop
         xTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(PID_SAMPLE_RATE_S * 1000));
