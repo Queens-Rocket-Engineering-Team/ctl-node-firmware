@@ -105,6 +105,24 @@
                 "default_state": "OPEN",
                 "type": "bool",
                 "unit": "unitless"
+            },
+            "Fan1": {
+                "control_index": "FAN_1",
+                "default_state": "OPEN",
+                "type": "bool",
+                "unit": "unitless"
+            },
+            "Fan2": {
+                "control_index": "FAN_2",
+                "default_state": "OPEN",
+                "type": "bool",
+                "unit": "unitless"
+            },
+            "Fan3": {
+                "control_index": "FAN_3",
+                "default_state": "OPEN",
+                "type": "bool",
+                "unit": "unitless"
             }
         },
         "heater": {
