@@ -8,6 +8,7 @@
 #include "thermocouple.h"
 #include "thermistor.h"
 #include "hall_effect_current.h"
+#include "ign_driver_resistance_sensor.h"
 
 typedef union {
     sensor_base_t base;
@@ -18,4 +19,5 @@ typedef union {
     current_sensor_t current_sensor;
     he_current_t he_current;
     resistance_sensor_t resistance_sensor;
+    ign_driver_res_sensor_t ign_driver_resistance;
 } sensor_t;
