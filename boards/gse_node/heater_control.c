@@ -17,12 +17,12 @@ static const char *TAG = "HEATER CONTROL";
 
 #define PWM_HZ 10
 
-#define PID_SAMPLE_RATE_S 1
+#define PID_SAMPLE_RATE_MS 1000
 
 // these constants assume an error in units of C and a normalized output from 0 to 1 for duty cycle, used with a 300w heater (STILL NEED TO BE TUNED)
 #define PID_KP 1
-#define PID_KI 1
-#define PID_KD 1
+#define PID_KI 0
+#define PID_KD 0
 
 esp_err_t heater_control_init(heater_ctx_t *heater_ctx) {
     // create a queue for the setpoint and register it in the queue registry
@@ -72,7 +72,7 @@ void heater_control_task(void *pvParams) {
         .integral = 0,
         .setpoint = 0,
         .prev_measurement = 0,
-        .dt = PID_SAMPLE_RATE_S,
+        .dt = PID_SAMPLE_RATE_MS / 1000.0f,
         .output_max = 1,
         .output_min = 0,
     };
@@ -120,6 +120,6 @@ void heater_control_task(void *pvParams) {
         ledc_update_duty(LEDC_MODE, heater_ctx->channel);
 
         // delay until next loop
-        xTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(PID_SAMPLE_RATE_S * 1000));
+        xTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(PID_SAMPLE_RATE_MS));
     }
 }
