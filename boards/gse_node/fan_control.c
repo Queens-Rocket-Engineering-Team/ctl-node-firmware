@@ -5,6 +5,8 @@
 #include <driver/gpio.h>
 #include <driver/pulse_cnt.h>
 #include <math.h>
+#include <stdint.h>
+#include <stddef.h>
 
 #include "control.h"
 #include "pid.h"
@@ -16,12 +18,14 @@ static const char *TAG = "FAN CONTROL";
 
 #define PWM_HZ 25000
 
-#define PID_SAMPLE_RATE_S 0.1f
+#define PID_SAMPLE_RATE_MS 100
+#define AVG_WINDOW_MS 1000
+#define PCNT_HISTORY_LENGTH (AVG_WINDOW_MS / PID_SAMPLE_RATE_MS)
 
 // these constants assume an error in units of RPM and a normalized output from 0 to 1 for duty cycle
 #define PID_KP 1
-#define PID_KI 1
-#define PID_KD 1
+#define PID_KI 0
+#define PID_KD 0
 
 esp_err_t fan_control_init(fan_ctx_t *fan_ctx) {
     // create a queue for the setpoint and register it in the queue registry
@@ -98,7 +102,7 @@ void fan_control_task(void *pvParams) {
         .integral = 0,
         .setpoint = 0,
         .prev_measurement = 0,
-        .dt = PID_SAMPLE_RATE_S,
+        .dt = PID_SAMPLE_RATE_MS / 1000.0f,
         .output_max = 1,
         .output_min = 0,
     };
@@ -108,8 +112,13 @@ void fan_control_task(void *pvParams) {
 
     int current_count = 0;
     int last_count = 0;
-    int32_t delta_count = 0;
+    uint32_t delta_count = 0;
     float reading = 0;
+
+    uint32_t delta_history[PCNT_HISTORY_LENGTH] = {0};
+    uint32_t delta_sum = 0;
+    size_t pcnt_history_idx = 0;
+    size_t window_fill_count = 0; // Used to prevent false low readings on startup
 
     TickType_t last_wake_time = xTaskGetTickCount();
 
@@ -125,10 +134,24 @@ void fan_control_task(void *pvParams) {
 
         // get the RPM reading
         pcnt_unit_get_count(pcnt_unit, &current_count);
-        delta_count = current_count - last_count;
+        delta_count = (uint32_t)(current_count - last_count);
         last_count = current_count;
 
-        reading = (((float) delta_count) / PID_SAMPLE_RATE_S) * 60.0f / 2.0f; // units RPM, tachometer gives two pulses per revolution
+        // take a moving average with ring buffer
+        delta_sum -= delta_history[pcnt_history_idx];
+        delta_history[pcnt_history_idx] = delta_count;
+        delta_sum += delta_count;
+        
+        pcnt_history_idx = (pcnt_history_idx + 1) % PCNT_HISTORY_LENGTH;
+        
+        // maintains accurate readings at startup
+        if (window_fill_count < PCNT_HISTORY_LENGTH) {
+            window_fill_count++;
+        }
+        float active_window_time = window_fill_count * (PID_SAMPLE_RATE_MS / 1000.0f);
+        
+        // find the rpm from the averaged value
+        reading = (((float) delta_sum) / active_window_time) * 60.0f / 2.0f;
 
         // find duty cycle from pid controller
         duty_cycle = pid_step(&pid, reading);
@@ -148,6 +171,6 @@ void fan_control_task(void *pvParams) {
         ledc_update_duty(LEDC_MODE, fan_ctx->channel);
 
         // delay until next loop
-        xTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(PID_SAMPLE_RATE_S * 1000));
+        xTaskDelayUntil(&last_wake_time, pdMS_TO_TICKS(PID_SAMPLE_RATE_MS));
     }
 }
