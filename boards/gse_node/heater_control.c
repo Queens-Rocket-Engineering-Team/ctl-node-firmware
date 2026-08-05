@@ -9,6 +9,7 @@
 
 #include "control.h"
 #include "heater_control.h"
+#include "pid.h"
 
 static const char *TAG = "HEATER CONTROL";
 
@@ -22,52 +23,6 @@ static const char *TAG = "HEATER CONTROL";
 #define PID_KP 1
 #define PID_KI 1
 #define PID_KD 1
-
-typedef struct {
-    float kp;
-    float ki;
-    float kd;
-    float integral;
-    float setpoint;
-    float prev_measurement;
-    float dt;
-    float output_max;
-    float output_min;
-} pid_ctx_t;
-
-static float pid_step(pid_ctx_t *pid, float measurement) {
-    const float error = pid->setpoint - measurement;
-
-    const float proportional = pid->kp * error;
-    const float derivative = pid->kd * (pid->prev_measurement - measurement) / pid->dt;
-
-    // compute output before updating integral
-    float unsaturated_output = proportional + pid->integral + derivative;
-
-    // only integrate if not saturated or if integrating moves out of saturation
-    bool max_saturated = (unsaturated_output >= pid->output_max) && (error > 0);
-    bool min_saturated = (unsaturated_output <= pid->output_min) && (error < 0);
-
-    if (!max_saturated && !min_saturated) {
-        pid->integral += pid->ki * error * pid->dt;
-        
-        if (pid->integral > pid->output_max) {
-            pid->integral = pid->output_max;
-        } else if (pid->integral < pid->output_min) {
-            pid->integral = pid->output_min;
-        }
-    }
-
-    float output = proportional + pid->integral + derivative;
-    if (output > pid->output_max) {
-        output = pid->output_max;
-    } else if (output < pid->output_min) {
-        output = pid->output_min;
-    }
-
-    pid->prev_measurement = measurement;
-    return output;
-}
 
 esp_err_t heater_control_init(heater_ctx_t *heater_ctx) {
     // create a queue for the setpoint and register it in the queue registry
@@ -84,7 +39,7 @@ esp_err_t heater_control_init(heater_ctx_t *heater_ctx) {
 }
 
 void heater_control_task(void *pvParams) {
-    heater_ctx_t *heater_ctx = (heater_ctx_t *)pvParams;
+    heater_ctx_t *heater_ctx = (heater_ctx_t *) pvParams;
 
     QueueHandle_t heater_queue_handle = {0};
     queue_registry_get(&heater_queue_handle, heater_ctx->queue_id);
@@ -125,7 +80,7 @@ void heater_control_task(void *pvParams) {
     float duty_cycle = 0;
     float reading = 0;
     float avg_reading = 0;
-    uint32_t duty_cycle_14_bit;
+    uint32_t duty_cycle_14_bit = 0;
 
     TickType_t last_wake_time = xTaskGetTickCount();
 

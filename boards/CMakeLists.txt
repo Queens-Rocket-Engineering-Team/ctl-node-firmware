@@ -8,7 +8,9 @@ idf_component_register(
     esp_common
     controls
     sensors
+    pid
     freertos
     esp_driver_ledc
     esp_driver_gpio
+    esp_driver_pcnt
 )

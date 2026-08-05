@@ -4,6 +4,7 @@
 #include <stdint.h>
 #include <driver/ledc.h>
 #include <freertos/FreeRTOS.h>
+#include <driver/gpio.h>
 
 #include "thermistor.h"
 

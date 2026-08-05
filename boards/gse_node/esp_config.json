@@ -105,24 +105,6 @@
                 "default_state": "OPEN",
                 "type": "bool",
                 "unit": "unitless"
-            },
-            "Fan1": {
-                "control_index": "FAN_1",
-                "default_state": "OPEN",
-                "type": "bool",
-                "unit": "unitless"
-            },
-            "Fan2": {
-                "control_index": "FAN_2",
-                "default_state": "OPEN",
-                "type": "bool",
-                "unit": "unitless"
-            },
-            "Fan3": {
-                "control_index": "FAN_3",
-                "default_state": "OPEN",
-                "type": "bool",
-                "unit": "unitless"
             }
         },
         "heater": {
@@ -131,6 +113,26 @@
                 "default_state": 0,
                 "type": "uint32",
                 "unit": "C"
+            }
+        },
+        "fan": {
+            "Fan1": {
+                "control_index": "FAN_1",
+                "default_state": 0,
+                "type": "uint32",
+                "unit": "RPM"
+            },
+            "Fan2": {
+                "control_index": "FAN_2",
+                "default_state": 0,
+                "type": "uint32",
+                "unit": "RPM"
+            },
+            "Fan3": {
+                "control_index": "FAN_3",
+                "default_state": 0,
+                "type": "uint32",
+                "unit": "RPM"
             }
         }
     }
