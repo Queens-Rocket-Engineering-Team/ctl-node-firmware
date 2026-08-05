@@ -105,25 +105,23 @@
         "HEATER_1_POWER": {
             "pin": 21
         },
-        "HEATER_1_PWM": {
-            "v_pin": 1
-        },
         "HEATER_2_POWER": {
             "pin": 48
+        },
+        "HEATER_1_PWM": {
+            "v_pin": 1
         },
         "HEATER_2_PWM": {
             "v_pin": 2
         },
-
-
         "FAN_1": {
-            "pin": 40
+            "v_pin": 3
         },
         "FAN_2": {
-            "pin": 42
+            "v_pin": 4
         },
         "FAN_3": {
-            "pin": 1
+            "v_pin": 5
         }
     }
 }

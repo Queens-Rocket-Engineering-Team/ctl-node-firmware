@@ -33,5 +33,14 @@
             "default_state": "default_state"
         },
         "type": "v_uint32"
+    },
+    "fan": {
+        "cfg_struct_name": "v_uint32_control_config_t",
+        "init_func": "v_uint32_control_init",
+        "cfg_struct_fields": {
+            "queue_id": "v_pin",
+            "default_state": "default_state"
+        },
+        "type": "v_uint32"
     }
 }
