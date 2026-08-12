@@ -23,7 +23,7 @@ static const char *TAG = "FAN CONTROL";
 #define PCNT_HISTORY_LENGTH (AVG_WINDOW_MS / PID_SAMPLE_RATE_MS)
 
 // these constants assume an error in units of RPM and a normalized output from 0 to 1 for duty cycle
-#define PID_KP 1
+#define PID_KP 1 // STILL NEEDS TUNING
 #define PID_KI 0
 #define PID_KD 0
 
@@ -118,7 +118,7 @@ void fan_control_task(void *pvParams) {
     uint32_t delta_history[PCNT_HISTORY_LENGTH] = {0};
     uint32_t delta_sum = 0;
     size_t pcnt_history_idx = 0;
-    size_t window_fill_count = 0; // Used to prevent false low readings on startup
+    size_t window_fill_count = 0; // used to prevent false low readings on startup
 
     TickType_t last_wake_time = xTaskGetTickCount();
 
