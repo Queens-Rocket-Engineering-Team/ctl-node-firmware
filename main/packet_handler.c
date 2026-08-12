@@ -156,11 +156,11 @@ static void s_estop_handler(app_ctx_t *app_ctx, qlcp_header_only_packet *estop_p
 }
 
 static void s_timesync_resp_handler(app_ctx_t *app_ctx, qlcp_timesync_resp_packet *timesync_resp_packet, qlcp_server_payload *payload_out) {
-    const uint64_t t1 = timesync_resp_packet->t1_echo_us;
-    const uint64_t t2 = timesync_resp_packet->t2_us;
-    const uint64_t t3 = timesync_resp_packet->header.timestamp_us;
-    const uint64_t t4 = esp_timer_get_time();
-    const uint64_t new_ts_offset = ((t1 - t2) + (t4 - t3)) / 2;
+    const int64_t t1 = (int64_t) timesync_resp_packet->t1_echo_us;
+    const int64_t t2 = (int64_t) timesync_resp_packet->t2_us;
+    const int64_t t3 = (int64_t) timesync_resp_packet->header.timestamp_us;
+    const int64_t t4 = (int64_t) esp_timer_get_time();
+    const int64_t new_ts_offset = ((t1 - t2) + (t4 - t3)) / 2;
     atomic_store(&app_ctx->ts_offset, new_ts_offset);
 
     payload_out->packet_type = QLCP_PT_ACK;
