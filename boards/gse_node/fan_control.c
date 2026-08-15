@@ -23,9 +23,9 @@ static const char *TAG = "FAN CONTROL";
 #define PCNT_HISTORY_LENGTH (AVG_WINDOW_MS / PID_SAMPLE_RATE_MS)
 
 // these constants assume an error in units of RPM and a normalized output from 0 to 1 for duty cycle
-#define PID_KP 1 // STILL NEEDS TUNING
-#define PID_KI 0
-#define PID_KD 0
+#define PID_KP 0.0007f
+#define PID_KI 0.0003f
+#define PID_KD 0.0f
 
 esp_err_t fan_control_init(fan_ctx_t *fan_ctx) {
     // create a queue for the setpoint and register it in the queue registry
@@ -77,7 +77,7 @@ void fan_control_task(void *pvParams) {
     ESP_ERROR_CHECK_WITHOUT_ABORT(pcnt_new_unit(&unit_config, &pcnt_unit));
 
     pcnt_glitch_filter_config_t filter_config = {
-        .max_glitch_ns = 10000,
+        .max_glitch_ns = 1000,
     };
     ESP_ERROR_CHECK_WITHOUT_ABORT(pcnt_unit_set_glitch_filter(pcnt_unit, &filter_config));
 
@@ -152,9 +152,11 @@ void fan_control_task(void *pvParams) {
         
         // find the rpm from the averaged value
         reading = (((float) delta_sum) / active_window_time) * 60.0f / 2.0f;
+        ESP_LOGI(TAG, "%f RPM", reading);
 
         // find duty cycle from pid controller
         duty_cycle = pid_step(&pid, reading);
+        duty_cycle = 1.0f - duty_cycle; // inverted due to open drain nmos
         // clamp pwm duty cycle to avoid short pulses to fet
         if (duty_cycle > 0.99f) {
             duty_cycle = 1.0f;
@@ -163,9 +165,9 @@ void fan_control_task(void *pvParams) {
         }
 
         // update pwm duty cycle
-        duty_cycle_10_bit = roundf(1023 * duty_cycle);
-        if (duty_cycle_10_bit > 1023) {
-            duty_cycle_10_bit = 1023;
+        duty_cycle_10_bit = roundf(1024 * duty_cycle);
+        if (duty_cycle_10_bit > 1024) {
+            duty_cycle_10_bit = 1024;
         }
         ledc_set_duty(LEDC_MODE, fan_ctx->channel, duty_cycle_10_bit);
         ledc_update_duty(LEDC_MODE, fan_ctx->channel);
