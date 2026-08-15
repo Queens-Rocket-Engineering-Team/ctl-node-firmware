@@ -15,50 +15,6 @@
                 "resistor_ohms": 250,
                 "max_pressure_PSI": 1000,
                 "unit": "PSI"
-            },
-            "PT202": {
-                "sensor_index": "PT3",
-                "resistor_ohms": 250,
-                "max_pressure_PSI": 1000,
-                "unit": "PSI"
-            },
-            "PT203": {
-                "sensor_index": "PT4",
-                "resistor_ohms": 250,
-                "max_pressure_PSI": 1000,
-                "unit": "PSI"
-            },
-            "PT204": {
-                "sensor_index": "PT5",
-                "resistor_ohms": 250,
-                "max_pressure_PSI" : 1000,
-                "unit" : "PSI"
-            }
-        },
-
-        "load_cell": {
-            "LCFill": {
-                "sensor_index": "LC_FILL",
-                "load_rating_N": 1962,
-                "excitation_V": 5,
-                "sensitivity_vV": 2,
-                "unit": "kg"
-            },
-            "LCThrust": {
-                "sensor_index": "LC_THRUST",
-                "load_rating_N" : 29430,
-                "excitation_V" : 5,
-                "sensitivity_vV" : 2,
-                "unit" : "n"
-            }
-        },
-
-        "current_sensor" : {
-            "ignCurrent" : {
-                "sensor_index": "IGN_CURRENT_READ",
-                "shunt_resistor_ohms": 0.025,
-                "csa_gain": 20,
-                "unit": "A"
             }
         }
     },
@@ -71,27 +27,15 @@
                 "type": "bool",
                 "unit": "unitless"
             },
-            "AV205": {
-                "control_index": "AV_RUN",
-                "default_state": "CLOSED",
-                "type": "bool",
-                "unit": "unitless"
-            },
-            "AV204": {
-                "control_index": "AV3",
-                "default_state": "OPEN",
-                "type": "bool",
-                "unit": "unitless"
-            },
-            "AV203": {
-                "control_index": "AV4",
-                "default_state": "CLOSED",
-                "type": "bool",
-                "unit": "unitless"
-            },
             "AV101": {
                 "control_index": "AV5",
                 "default_state": "OPEN",
+                "type": "bool",
+                "unit": "unitless"
+            },
+            "AV102": {
+                "control_index": "AV4",
+                "default_state": "CLOSED",
                 "type": "bool",
                 "unit": "unitless"
             },
@@ -105,18 +49,6 @@
         "relay": {
             "Safe24": {
                 "control_index": "SAFE_24V_CTL",
-                "default_state": "OPEN",
-                "type": "bool",
-                "unit": "unitless"
-            },
-            "IgnPrime": {
-                "control_index": "IGNITOR_PRIME_CTL",
-                "default_state": "OPEN",
-                "type": "bool",
-                "unit": "unitless"
-            },
-            "IgnRun": {
-                "control_index": "IGNITOR_RUN_CTL",
                 "default_state": "OPEN",
                 "type": "bool",
                 "unit": "unitless"

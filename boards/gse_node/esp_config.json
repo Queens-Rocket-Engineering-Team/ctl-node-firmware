@@ -88,7 +88,7 @@
             }
         },
         "relay": {
-            "Safe24": {
+            "GSE-Safe24": {
                 "control_index": "IGN_SAFE24_CTL",
                 "default_state": "OPEN",
                 "type": "bool",
@@ -102,6 +102,12 @@
             },
             "IgnRun": {
                 "control_index": "IGN_RUN_CTL",
+                "default_state": "OPEN",
+                "type": "bool",
+                "unit": "unitless"
+            },
+            "HeaterEnable":{
+                "control_index": "HEATER_1_POWER",
                 "default_state": "OPEN",
                 "type": "bool",
                 "unit": "unitless"
