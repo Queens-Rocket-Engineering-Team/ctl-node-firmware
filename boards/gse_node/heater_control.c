@@ -19,8 +19,9 @@ static const char *TAG = "HEATER CONTROL";
 
 #define PID_SAMPLE_RATE_MS 1000
 
-// these constants assume an error in units of C and a normalized output from 0 to 1 for duty cycle, used with a 300w heater (STILL NEED TO BE TUNED)
-#define PID_KP 1 // STILL NEEDS TUNING
+// these constants assume an error in units of C and a normalized output from 0 to 1 for duty cycle, used with a 300w heater
+// also assumes thermistor is 25cm up from the top edge of the heater, expoxied to tank
+#define PID_KP 0.35f
 #define PID_KI 0
 #define PID_KD 0
 
