@@ -33,20 +33,8 @@
             }
         },
         "thermistor": {
-            "Heater1TH1": {
-                "sensor_index": "HEATER_1_TH1",
-                "beta": 3950,
-                "resistor_ohms": 10000,
-                "unit": "C"
-            },
             "Heater1TH2": {
                 "sensor_index": "HEATER_1_TH2",
-                "beta": 3950,
-                "resistor_ohms": 10000,
-                "unit": "C"
-            },
-            "Heater1TH3": {
-                "sensor_index": "HEATER_1_TH3",
                 "beta": 3950,
                 "resistor_ohms": 10000,
                 "unit": "C"
@@ -62,26 +50,8 @@
 
     "controls": {
         "solenoid": {
-            "ACT1": {
+            "Clamshell": {
                 "control_index": "ACT1",
-                "default_state": "OPEN",
-                "type": "bool",
-                "unit": "unitless"
-            },
-            "ACT2": {
-                "control_index": "ACT2",
-                "default_state": "OPEN",
-                "type": "bool",
-                "unit": "unitless"
-            },
-            "ACT3": {
-                "control_index": "ACT3",
-                "default_state": "OPEN",
-                "type": "bool",
-                "unit": "unitless"
-            },
-            "ACT4": {
-                "control_index": "ACT4",
                 "default_state": "OPEN",
                 "type": "bool",
                 "unit": "unitless"
@@ -130,12 +100,6 @@
             },
             "Fan2": {
                 "control_index": "FAN_2",
-                "default_state": 0,
-                "type": "uint32",
-                "unit": "RPM"
-            },
-            "Fan3": {
-                "control_index": "FAN_3",
                 "default_state": 0,
                 "type": "uint32",
                 "unit": "RPM"

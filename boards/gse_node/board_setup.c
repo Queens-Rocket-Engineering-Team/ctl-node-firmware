@@ -40,17 +40,15 @@ esp_err_t board_setup(board_ctx_t *board_ctx) {
 
     // heaters init
 
-    static thermistor_t thermistors[4] = {0};
+    static thermistor_t thermistors[2] = {0};
 
-    ESP_RETURN_ON_ERROR(make_thermistor(&thermistors[0], board_ctx->adcs, board_ctx->num_adcs, 68, ADS112C04_AIN0), TAG, "Failed heater 1, thermistor 0");
-    ESP_RETURN_ON_ERROR(make_thermistor(&thermistors[1], board_ctx->adcs, board_ctx->num_adcs, 68, ADS112C04_AIN1), TAG, "Failed heater 1, thermistor 1");
-    ESP_RETURN_ON_ERROR(make_thermistor(&thermistors[2], board_ctx->adcs, board_ctx->num_adcs, 68, ADS112C04_AIN2), TAG, "Failed heater 1, thermistor 2");
-    ESP_RETURN_ON_ERROR(make_thermistor(&thermistors[3], board_ctx->adcs, board_ctx->num_adcs, 68, ADS112C04_AIN3), TAG, "Failed heater 1, thermistor 3");
+    ESP_RETURN_ON_ERROR(make_thermistor(&thermistors[0], board_ctx->adcs, board_ctx->num_adcs, 68, ADS112C04_AIN1), TAG, "Failed heater 1, thermistor 2");
+    ESP_RETURN_ON_ERROR(make_thermistor(&thermistors[1], board_ctx->adcs, board_ctx->num_adcs, 68, ADS112C04_AIN3), TAG, "Failed heater 1, thermistor 4");
 
     static heater_ctx_t heater_1_ctx = {
         .queue_id = 1,
         .thermistors = thermistors,
-        .num_thermistors = 4,
+        .num_thermistors = 2,
         .pwm_pin = 14,
         .timer = LEDC_TIMER_0,
         .channel = LEDC_CHANNEL_0,
