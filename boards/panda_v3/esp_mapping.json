@@ -5,7 +5,6 @@
         "frequency_Hz": 1000000
     },
     "wifi_indicator_pin": 1,
-
     "ADC_map": {
         "ADC1": {
             "addr": 64,
@@ -80,8 +79,8 @@
         },
         "LC_FILL": {
             "ADC_index": "ADC1",
-            "p_pin": 0,
-            "n_pin": 1
+            "p_pin": 1,
+            "n_pin": 0
         },
         "IGN_RESIST_READ": {
             "ADC_index": "ADC4",
