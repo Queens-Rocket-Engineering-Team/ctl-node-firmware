@@ -1,0 +1,127 @@
+{
+    "i2c_bus": {
+        "sda_pin": 7,
+        "scl_pin": 6,
+        "frequency_Hz": 1000000
+    },
+    "wifi_indicator_pin": 38,
+
+    "ADC_map": {
+        "ADC1": {
+            "addr": 64,
+            "DRDY_pin": 5
+        },
+        "ADC2": {
+            "addr": 65,
+            "DRDY_pin": 4
+        },
+        "ADC3": {
+            "addr": 68,
+            "DRDY_pin": 9
+        },
+        "ADC4": {
+            "addr": 69,
+            "DRDY_pin": 10
+        }
+    },
+    "sensor_map": {
+        "LC_FILL": {
+            "ADC_index": "ADC1",
+            "p_pin": 1,
+            "n_pin": 0
+        },
+        "IGN_RES": {
+            "ADC_index": "ADC1",
+            "p_pin": 3,
+            "n_pin": 2
+        },
+        "IGN_HE": {
+            "ADC_index": "ADC2",
+            "pin": 1
+        },
+        "HEATER_1_HE": {
+            "ADC_index": "ADC2",
+            "pin": 0
+        },
+        "HEATER_2_HE": {
+            "ADC_index": "ADC2",
+            "pin": 2
+        },
+        "HEATER_1_TH1": {
+            "ADC_index": "ADC3",
+            "pin": 0
+        },
+        "HEATER_1_TH2": {
+            "ADC_index": "ADC3",
+            "pin": 1
+        },
+        "HEATER_1_TH3": {
+            "ADC_index": "ADC3",
+            "pin": 2
+        },
+        "HEATER_1_TH4": {
+            "ADC_index": "ADC3",
+            "pin": 3
+        },
+        "HEATER_2_TH1": {
+            "ADC_index": "ADC3",
+            "pin": 0
+        },
+        "HEATER_2_TH2": {
+            "ADC_index": "ADC3",
+            "pin": 1
+        },
+        "HEATER_2_TH3": {
+            "ADC_index": "ADC3",
+            "pin": 2
+        },
+        "HEATER_2_TH4": {
+            "ADC_index": "ADC3",
+            "pin": 3
+        }
+    },
+    "control_map": {
+        "ACT1": {
+            "pin": 8
+        },
+        "ACT2": {
+            "pin": 17
+        },
+        "ACT3": {
+            "pin": 16
+        },
+        "ACT4": {
+            "pin": 15
+        },
+        "IGN_SAFE24_CTL": {
+            "pin": 13
+        },
+        "IGN_PRIME_CTL": {
+            "pin": 11
+        },
+        "IGN_RUN_CTL": {
+            "pin": 12
+        },
+        "HEATER_1_POWER": {
+            "pin": 21
+        },
+        "HEATER_2_POWER": {
+            "pin": 48
+        },
+        "HEATER_1_PWM": {
+            "v_pin": 1
+        },
+        "HEATER_2_PWM": {
+            "v_pin": 2
+        },
+        "FAN_1": {
+            "v_pin": 3
+        },
+        "FAN_2": {
+            "v_pin": 4
+        },
+        "FAN_3": {
+            "v_pin": 5
+        }
+    }
+}

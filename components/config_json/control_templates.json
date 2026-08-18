@@ -1,26 +1,46 @@
 {
     "solenoid": {
-        "cfg_struct_name": "control_config_t",
-        "init_func": "control_init",
+        "cfg_struct_name": "h_bool_control_config_t",
+        "init_func": "h_bool_control_init",
         "cfg_struct_fields": {
             "gpio_num": "pin",
             "default_state": "default_state"
         },
         "default_state": {
-            "open": "CONTROL_OPEN",
-            "closed": "CONTROL_CLOSED"
-        }
+            "open": "BOOL_CONTROL_OPEN",
+            "closed": "BOOL_CONTROL_CLOSED"
+        },
+        "type": "h_bool"
     },
     "relay": {
-        "cfg_struct_name": "control_config_t",
-        "init_func": "control_init",
+        "cfg_struct_name": "h_bool_control_config_t",
+        "init_func": "h_bool_control_init",
         "cfg_struct_fields": {
             "gpio_num": "pin",
             "default_state": "default_state"
         },
         "default_state": {
-            "open": "CONTROL_OPEN",
-            "closed": "CONTROL_CLOSED"
-        }
+            "open": "BOOL_CONTROL_OPEN",
+            "closed": "BOOL_CONTROL_CLOSED"
+        },
+        "type": "h_bool"
+    },
+    "heater": {
+        "cfg_struct_name": "v_uint32_control_config_t",
+        "init_func": "v_uint32_control_init",
+        "cfg_struct_fields": {
+            "queue_id": "v_pin",
+            "default_state": "default_state"
+        },
+        "type": "v_uint32"
+    },
+    "fan": {
+        "cfg_struct_name": "v_uint32_control_config_t",
+        "init_func": "v_uint32_control_init",
+        "cfg_struct_fields": {
+            "queue_id": "v_pin",
+            "default_state": "default_state"
+        },
+        "type": "v_uint32"
     }
 }

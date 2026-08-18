@@ -3,9 +3,12 @@ idf_component_register(
     "sensor_base.c"
     "sensor_types/pressure_transducer.c"
     "sensor_types/thermocouple.c"
+    "sensor_types/thermistor.c"
     "sensor_types/load_cell.c"
     "sensor_types/resistance_sensor.c"
+    "sensor_types/ign_driver_resistance_sensor.c"
     "sensor_types/current_sensor.c"
+    "sensor_types/hall_effect_current.c"
     INCLUDE_DIRS
     "."
     "./sensor_types"

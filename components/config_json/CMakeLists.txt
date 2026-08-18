@@ -1,6 +1,6 @@
-set(CONFIG ${CMAKE_SOURCE_DIR}/esp_config.json)
-set(MAPPING ${CMAKE_SOURCE_DIR}/esp_mapping.json)
-set(CONFIG_CONVERT ${CMAKE_CURRENT_SOURCE_DIR}/esp_config_generate.py)
+set(CONFIG_SCRIPT ${CMAKE_CURRENT_SOURCE_DIR}/esp_config_generate.py)
+set(CONFIG_SENSOR_TEMPLATE ${CMAKE_CURRENT_SOURCE_DIR}/sensor_templates.json)
+set(CONFIG_CONTROL_TEMPLATE ${CMAKE_CURRENT_SOURCE_DIR}/control_templates.json)
 
 set(CONFIG_HEADER ${CMAKE_CURRENT_BINARY_DIR}/config_json.h)
 set(CONFIG_SOURCE ${CMAKE_CURRENT_BINARY_DIR}/config_json.c)
@@ -11,19 +11,23 @@ idf_component_register(
     REQUIRES
     ads112c04
     sensors
-    control
+    controls
 )
 
 idf_build_get_property(python PYTHON)
 # convert JSON config file to header and source code
 add_custom_command(
     OUTPUT "${CONFIG_HEADER}" "${CONFIG_SOURCE}"
-    COMMAND ${python} "${CONFIG_CONVERT}"
-            "${CONFIG}"
-            "${MAPPING}"
+    COMMAND ${python} "${CONFIG_SCRIPT}"
+            "${BOARD_CONFIG}"
+            "${BOARD_MAPPING}"
             "${CONFIG_HEADER}"
             "${CONFIG_SOURCE}"
-    DEPENDS "${CONFIG}" "${MAPPING}" "${CONFIG_CONVERT}"
+    DEPENDS "${BOARD_CONFIG}"
+            "${BOARD_MAPPING}"
+            "${CONFIG_SCRIPT}"
+            "${CONFIG_SENSOR_TEMPLATE}"
+            "${CONFIG_CONTROL_TEMPLATE}"
     VERBATIM
     COMMENT "Generating config_json component"
 )

@@ -1,0 +1,109 @@
+{
+    "device_name": "GSE-NODE",
+    "device_type": "Sensor Monitor",
+
+    "sensors": {
+        "load_cell": {
+            "LCFill": {
+                "sensor_index": "LC_FILL",
+                "load_rating_N": 1962,
+                "excitation_V": 5,
+                "sensitivity_vV": 2,
+                "unit": "kg"
+            }
+        },
+        "he_current": {
+            "IGNCurrent": {
+                "sensor_index": "IGN_HE",
+                "sensitivity_mV_A": 133,
+                "unit": "A"
+            },
+            "Heater1Current": {
+                "sensor_index": "HEATER_1_HE",
+                "sensitivity_mV_A": 133,
+                "unit": "A"
+            }
+        },
+        "ign_driver_resistance": {
+            "IGNResistance": {
+                "sensor_index": "IGN_RES",
+                "injected_current_mA": 5,
+                "preprocessing_gain": 28,
+                "unit": "ohms"
+            }
+        },
+        "thermistor": {
+            "Heater1TH2": {
+                "sensor_index": "HEATER_1_TH2",
+                "beta": 3950,
+                "resistor_ohms": 10000,
+                "unit": "C"
+            },
+            "Heater1TH4": {
+                "sensor_index": "HEATER_1_TH4",
+                "beta": 3950,
+                "resistor_ohms": 10000,
+                "unit": "C"
+            }
+        }
+    },
+
+    "controls": {
+        "solenoid": {
+            "Clamshell": {
+                "control_index": "ACT1",
+                "default_state": "OPEN",
+                "type": "bool",
+                "unit": "unitless"
+            }
+        },
+        "relay": {
+            "GSE-Safe24": {
+                "control_index": "IGN_SAFE24_CTL",
+                "default_state": "OPEN",
+                "type": "bool",
+                "unit": "unitless"
+            },
+            "IgnPrime": {
+                "control_index": "IGN_PRIME_CTL",
+                "default_state": "OPEN",
+                "type": "bool",
+                "unit": "unitless"
+            },
+            "IgnRun": {
+                "control_index": "IGN_RUN_CTL",
+                "default_state": "OPEN",
+                "type": "bool",
+                "unit": "unitless"
+            },
+            "HeaterEnable":{
+                "control_index": "HEATER_1_POWER",
+                "default_state": "OPEN",
+                "type": "bool",
+                "unit": "unitless"
+            }
+        },
+        "heater": {
+            "Heater1": {
+                "control_index": "HEATER_1_PWM",
+                "default_state": 0,
+                "type": "uint32",
+                "unit": "C"
+            }
+        },
+        "fan": {
+            "Fan1": {
+                "control_index": "FAN_1",
+                "default_state": 0,
+                "type": "uint32",
+                "unit": "RPM"
+            },
+            "Fan2": {
+                "control_index": "FAN_2",
+                "default_state": 0,
+                "type": "uint32",
+                "unit": "RPM"
+            }
+        }
+    }
+}

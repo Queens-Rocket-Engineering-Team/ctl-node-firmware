@@ -13,6 +13,21 @@
             "f": "SENSOR_UNIT_F"
         }
     },
+    "thermistor": {
+        "cfg_struct_name": "thermistor_config_t",
+        "init_func": "thermistor_init",
+        "cfg_struct_fields": {
+            "pin": "pin",
+            "beta": "beta",
+            "resistor_ohms": "resistor_ohms",
+            "unit": "unit"
+        },
+        "unit": {
+            "c": "SENSOR_UNIT_C",
+            "k": "SENSOR_UNIT_K",
+            "f": "SENSOR_UNIT_F"
+        }
+    },
     "pressure_transducer": {
         "cfg_struct_name": "pressure_transducer_config_t",
         "init_func": "pressure_transducer_init",
@@ -57,6 +72,20 @@
             "ohms": "SENSOR_UNIT_OHMS"
         }
     },
+    "ign_driver_resistance": {
+        "cfg_struct_name": "ign_driver_res_sensor_config_t",
+        "init_func": "ign_driver_res_sensor_init",
+        "cfg_struct_fields": {
+            "p_pin": "p_pin",
+            "n_pin": "n_pin",
+            "injected_current_mA": "injected_current_mA",
+            "preprocessing_gain": "preprocessing_gain",
+            "unit": "unit"
+        },
+        "unit": {
+            "ohms": "SENSOR_UNIT_OHMS"
+        }
+    },
     "current_sensor": {
         "cfg_struct_name": "current_sensor_config_t",
         "init_func": "current_sensor_init",
@@ -64,6 +93,18 @@
             "pin": "pin",
             "shunt_resistor_ohms": "shunt_resistor_ohms",
             "csa_gain": "csa_gain",
+            "unit": "unit"
+        },
+        "unit": {
+            "a": "SENSOR_UNIT_A"
+        }
+    },
+    "he_current": {
+        "cfg_struct_name": "he_current_config_t",
+        "init_func": "he_current_init",
+        "cfg_struct_fields": {
+            "pin": "pin",
+            "sensitivity_mV_A": "sensitivity_mV_A",
             "unit": "unit"
         },
         "unit": {

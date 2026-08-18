@@ -1,0 +1,58 @@
+{
+    "device_name": "PANDA-V3",
+    "device_type": "Sensor Monitor",
+
+    "sensors": {
+        "pressure_transducer": {
+            "PT101": {
+                "sensor_index": "PT1",
+                "resistor_ohms": 250,
+                "max_pressure_PSI" : 200,
+                "unit" : "PSI"
+            },
+            "PT201": {
+                "sensor_index": "PT2",
+                "resistor_ohms": 250,
+                "max_pressure_PSI": 1000,
+                "unit": "PSI"
+            }
+        }
+    },
+
+    "controls": {
+        "solenoid": {
+            "AV201": {
+                "control_index": "AV_FILL",
+                "default_state": "CLOSED",
+                "type": "bool",
+                "unit": "unitless"
+            },
+            "AV101": {
+                "control_index": "AV5",
+                "default_state": "OPEN",
+                "type": "bool",
+                "unit": "unitless"
+            },
+            "AV102": {
+                "control_index": "AV4",
+                "default_state": "CLOSED",
+                "type": "bool",
+                "unit": "unitless"
+            },
+            "AV202": {
+                "control_index": "AV6",
+                "default_state": "OPEN",
+                "type": "bool",
+                "unit": "unitless"
+            }
+        },
+        "relay": {
+            "Safe24": {
+                "control_index": "SAFE_24V_CTL",
+                "default_state": "OPEN",
+                "type": "bool",
+                "unit": "unitless"
+            }
+        }
+    }
+}

@@ -2,9 +2,10 @@ idf_component_register(
     SRCS "main.c" "setup.c" "packet_handler.c" "sensor_stream.c" "wifi/network_manager.c" "wifi/tcp_tools.c" "wifi/discovery_tools.c" "wifi/udp_tools.c"
     INCLUDE_DIRS . ./wifi
     REQUIRES
-    control
+    controls
     ads112c04
     config_json
+    boards
     qlcp_lib
     esp_common
     esp_driver_i2c

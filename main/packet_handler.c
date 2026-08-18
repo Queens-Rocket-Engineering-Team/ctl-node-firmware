@@ -85,30 +85,45 @@ static qlcp_nack_packet s_make_nack_packet(uint8_t nack_sequence, qlcp_packet_ty
 
 static qlcp_status_packet s_make_status_packet(uint8_t ack_sequence, qlcp_packet_type ack_type, app_ctx_t *app_ctx) {
     static uint8_t ring_buffer_idx = 0;
-    static qlcp_control_data control_data_ring_buffer[STATUS_RING_BUFFER_LEN][CONFIG_NUM_CONTROLS] = {0};
+    static qlcp_status_data status_data_ring_buffer[STATUS_RING_BUFFER_LEN][CONFIG_NUM_CONTROLS] = {0};
 
-    qlcp_control_data *control_data = control_data_ring_buffer[ring_buffer_idx];
+    qlcp_status_data *status_data = status_data_ring_buffer[ring_buffer_idx];
 
     ring_buffer_idx = (ring_buffer_idx + 1) % STATUS_RING_BUFFER_LEN;
 
-    memset(control_data, 0, sizeof(qlcp_control_data) * CONFIG_NUM_CONTROLS);
+    memset(status_data, 0, sizeof(qlcp_control_data) * CONFIG_NUM_CONTROLS);
 
-    // right now this only handles bool controls, needs to be fixed
+    // right now this only handles bool/v_uint32 controls
     for (size_t i = 0; i < CONFIG_NUM_CONTROLS; i++) {
-        control_data[i].id = i;
-        control_data[i].type = QLCP_CONTROL_BOOL;
-        const control_state_t control_internal_state = control_get_state(&app_ctx->controls[i]);
-        switch (control_internal_state) {
-        case CONTROL_OPEN:
-            control_data[i].state.control_bool = QLCP_CS_OPEN;
+        status_data[i].id = i;
+        status_data[i].status = QLCP_CONTROL_STATUS_CONFIRMED;
+
+        switch (app_ctx->controls[i].control_type) {
+        case CONTROL_TYPE_H_BOOL:
+            {
+                status_data[i].type = QLCP_CONTROL_BOOL;
+
+                const h_bool_control_state_t control_internal_state = h_bool_control_get_state(&app_ctx->controls[i].control.h_bool);
+                switch (control_internal_state) {
+                case BOOL_CONTROL_OPEN:
+                    status_data[i].state.control_bool = QLCP_CS_OPEN;
+                    break;
+                case BOOL_CONTROL_CLOSED:
+                    status_data[i].state.control_bool = QLCP_CS_CLOSED;
+                    break;
+                case BOOL_CONTROL_UNKNOWN:
+                    status_data[i].status = QLCP_CONTROL_STATUS_ERROR;
+                    break;
+                };
+            }
             break;
-        case CONTROL_CLOSED:
-            control_data[i].state.control_bool = QLCP_CS_CLOSED;
+        case CONTROL_TYPE_V_UINT32:
+            status_data[i].type = QLCP_CONTROL_UINT32;
+            status_data[i].state.control_uint32 = v_uint32_control_get_state(&app_ctx->controls[i].control.v_uint32);
             break;
-        case CONTROL_UNKNOWN:
-            control_data[i].state.control_bool = QLCP_CS_ERROR;
-            break;
-        };
+        default:
+            continue;
+        }
     }
 
     const int64_t current_ts_offset = atomic_load(&app_ctx->ts_offset);
@@ -116,7 +131,7 @@ static qlcp_status_packet s_make_status_packet(uint8_t ack_sequence, qlcp_packet
     const uint8_t sequence = atomic_fetch_add(&app_ctx->sequence, 1);
 
     const qlcp_status_packet status = {
-        .control_data = control_data,
+        .control_data = status_data,
         .control_count = CONFIG_NUM_CONTROLS,
         .ack_packet_type = ack_type,
         .ack_sequence = ack_sequence,
@@ -132,7 +147,7 @@ static qlcp_status_packet s_make_status_packet(uint8_t ack_sequence, qlcp_packet
 
 static void s_estop_handler(app_ctx_t *app_ctx, qlcp_header_only_packet *estop_packet, qlcp_server_payload *payload_out) {
     for (size_t i = 0; i < CONFIG_NUM_CONTROLS; i++) {
-        control_set_default(&app_ctx->controls[i]);
+        app_ctx->controls[i].control.base.set_default(&app_ctx->controls[i].control.base);
     }
     ESP_LOGW(TAG, "Received ESTOP, reset to default state");
 
@@ -141,11 +156,11 @@ static void s_estop_handler(app_ctx_t *app_ctx, qlcp_header_only_packet *estop_p
 }
 
 static void s_timesync_resp_handler(app_ctx_t *app_ctx, qlcp_timesync_resp_packet *timesync_resp_packet, qlcp_server_payload *payload_out) {
-    const uint64_t t1 = timesync_resp_packet->t1_echo_us;
-    const uint64_t t2 = timesync_resp_packet->t2_us;
-    const uint64_t t3 = timesync_resp_packet->header.timestamp_us;
-    const uint64_t t4 = esp_timer_get_time();
-    const uint64_t new_ts_offset = ((t1 - t2) + (t4 - t3)) / 2;
+    const int64_t t1 = (int64_t) timesync_resp_packet->t1_echo_us;
+    const int64_t t2 = (int64_t) timesync_resp_packet->t2_us;
+    const int64_t t3 = (int64_t) timesync_resp_packet->header.timestamp_us;
+    const int64_t t4 = (int64_t) esp_timer_get_time();
+    const int64_t new_ts_offset = ((t1 - t2) + (t4 - t3)) / 2;
     atomic_store(&app_ctx->ts_offset, new_ts_offset);
 
     payload_out->packet_type = QLCP_PT_ACK;
@@ -162,19 +177,36 @@ static void s_control_handler(app_ctx_t *app_ctx, qlcp_control_packet *control_p
     if (i < CONFIG_NUM_CONTROLS) {
         switch (control_packet->control_data.type) {
             case QLCP_CONTROL_BOOL:
+                if (app_ctx->controls[i].control_type != CONTROL_TYPE_H_BOOL) {
+                    err = ESP_ERR_INVALID_ARG;
+                    nack_err = QLCP_ERR_INVALID_PARAM;
+                    break;
+                }
+
                 if (control_packet->control_data.state.control_bool == QLCP_CS_OPEN) {
-                    err = control_open(&app_ctx->controls[i]);
+                    err = h_bool_control_open(&app_ctx->controls[i].control.h_bool);
                 } else if (control_packet->control_data.state.control_bool == QLCP_CS_CLOSED) {
-                    err = control_close(&app_ctx->controls[i]);
+                    err = h_bool_control_close(&app_ctx->controls[i].control.h_bool);
                 } else {
                     nack_err = QLCP_ERR_INVALID_PARAM;
                 }
                 break;
-            // finish these when other controls are implemented
             case QLCP_CONTROL_UINT32:
+                if (app_ctx->controls[i].control_type != CONTROL_TYPE_V_UINT32) {
+                    err = ESP_ERR_INVALID_ARG;
+                    nack_err = QLCP_ERR_INVALID_PARAM;
+                    break;
+                }
+
+                err = v_uint32_control_set(&app_ctx->controls[i].control.v_uint32, control_packet->control_data.state.control_uint32);
+                break;
+            // currently unsupported
             case QLCP_CONTROL_INT32:
             case QLCP_CONTROL_FLOAT32:
             default:
+                err = ESP_ERR_INVALID_ARG;
+                nack_err = QLCP_ERR_INVALID_PARAM;
+                break;
         }
     }
 
@@ -295,7 +327,7 @@ void packet_handler(void *pvParams) {
         // reset all controls to default state when watchdog timeout triggers
         if (esp_timer_get_time() - last_packet_time_us > WATCHDOG_RESET_TIMEOUT_US) {
             for (size_t i = 0; i < CONFIG_NUM_CONTROLS; i++) {
-                control_set_default(&app_ctx->controls[i]);
+                app_ctx->controls[i].control.base.set_default(&app_ctx->controls[i].control.base);
             }
             ESP_LOGW(TAG, "Software watchdog triggered, reset to default state");
             last_packet_time_us = esp_timer_get_time();

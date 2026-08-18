@@ -8,13 +8,13 @@
 #include "sensor_base.h"
 #include "thermocouple.h"
 
-static const char *TAG = "PRESSURE TRANSDUCER";
+static const char *TAG = "THERMOCOUPLE";
 
 static esp_err_t read_sensor(sensor_base_t *base, float *value) {
     if (base == NULL || value == NULL) {
         return ESP_ERR_INVALID_ARG;
     }
-    // cast base to current_sensor_t, since it is the first member of struct
+    // cast base to thermocouple_t, since it is the first member of struct
     return get_thermocouple_reading((thermocouple_t *)base, value);
 }
 
@@ -150,6 +150,10 @@ esp_err_t thermocouple_init(thermocouple_t *thermocouple, const thermocouple_con
 }
 
 esp_err_t get_thermocouple_reading(thermocouple_t *thermocouple, float *temperature) {
+    if (thermocouple == NULL || temperature == NULL) {
+        return ESP_ERR_INVALID_ARG;
+    }
+    
     float voltage = 0;
     ESP_RETURN_ON_ERROR(
         sensor_base_voltage_reading(&thermocouple->base, &voltage), TAG, "Failed to get thermocouple voltage reading"
@@ -169,9 +173,9 @@ esp_err_t get_thermocouple_reading(thermocouple_t *thermocouple, float *temperat
     if (thermocouple->base.unit == SENSOR_UNIT_C) {
         *temperature = temp_C;
     } else if (thermocouple->base.unit == SENSOR_UNIT_K) {
-        *temperature = temp_C + 273.15;
+        *temperature = temp_C + 273.15f;
     } else if (thermocouple->base.unit == SENSOR_UNIT_F) {
-        *temperature = (temp_C * 1.8) + 32;
+        *temperature = (temp_C * 1.8f) + 32;
     } else {
         return ESP_ERR_INVALID_ARG;
     }
