@@ -25,7 +25,7 @@ Installation instructions for ESP-IDF in VSCode can be found at [ESP-IDF Install
 It is recommended to install ESP-IDF in WSL if on Windows, as the Linux version is more stable.
 
 ## Configuration files
-Board configurations are managed in two files, esp_config.json and esp_mapping.json.
+Board configurations are managed in two files, esp_config.json and esp_mapping.json. These files are found under the boards directory, in a named folder for each board configuration.
 - esp_mapping.json: Contains all hardware GPIO and ADC configurations, which is board specific. This should only need to be set once per board. For ease of use, connections from esp_mapping.json should be labelled the same as the silkscreen labels on the board.
 - esp_config.json: Contails all sensor and control configs. Sensor and control configs reference esp_mapping.json to get their hardware configurations. To set up a new sensor or control, set the sensor_index or control_index field to the corresponding connection name from esp_mapping.json, and fill out any other relevant fields.
 
@@ -65,7 +65,7 @@ Board configurations are managed in two files, esp_config.json and esp_mapping.j
     "device_name": "PANDA-V3",
     "device_type": "Sensor Monitor",
 
-    "sensor_info": {
+    "sensors": {
         "thermocouple": {
             "TCRun": {
                 "sensor_index": "TC1",
@@ -79,7 +79,8 @@ Board configurations are managed in two files, esp_config.json and esp_mapping.j
         "Safe24": {
             "control_index": "SAFE_24V_CTL",
             "default_state" : "OPEN",
-            "type" : "relay"
+            "type" : "bool",
+            "unit": "unitless"
         }
 }
 ```
@@ -98,7 +99,8 @@ idf.py set-target <your-model>
 
 To build and flash the project to your ESP32, run:
 ```bash
-idf.py build
+idf.py -DBOARD=<board_config_dir> build
+ex. idf.py -DBOARD=panda_v3 build
 idf.py flash
 ```
 
