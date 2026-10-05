@@ -28,8 +28,9 @@ static const char *TAG = "PACKET HANDLER";
 static void s_timesync_req_callback(void *ctx) {
     app_ctx_t *app_ctx = (app_ctx_t *) ctx;
 
-    const int64_t current_ts_offset = atomic_load(&app_ctx->ts_offset);
-    const int64_t timestamp_us = esp_timer_get_time() - current_ts_offset;
+    // Unlike other packets, TIMESYNC_REQ is sent with the raw timestamp needed
+    // for the offset calculation (see s_timesync_resp_handler)
+    const int64_t timestamp_us = esp_timer_get_time();
     const uint8_t sequence = atomic_fetch_add(&app_ctx->sequence, 1);
 
     const qlcp_header_only_packet timesync_req = {
